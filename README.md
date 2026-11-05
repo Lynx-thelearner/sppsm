@@ -1,4 +1,4 @@
-# SPPSM (Sistem Pengelolaan Proyek)
+# SPPSM (Sistem Pengelolaan & Penjemputan Sampah Mandiri)
 
 Proyek Akhir untuk tugas kampus.
 Wajarnya ini pakai uv [uv](https://docs.astral.sh/uv/) tapi bisa juga pakai pip (nanti aku urus)
@@ -13,7 +13,7 @@ pip install uv
 
 ### 1. Clone repository & install dependencies:
 ```bash
-git clone <URL_REPO_GITHUB>
+git clone https://github.com/Lynx-thelearner/sppsm.git
 cd sppsm
 uv sync
 ```
@@ -27,32 +27,32 @@ uv run sppsm
 
 ## Aturan Kelompok gweh (WAJIB DIBACA!)
 
-Karena kita kerja bareng dalam satu repo, **semua anggota tim wajib mematuhi aturan berikut** agar kodingan tidak saling menimpa atau merusak program utama.
+Karena kita kerja bareng dalam satu repo, **IKUTI ATURAN INI** biar kodingan kita enggak *conflict*
 
 ---
 
 ### 1. HARAM Push Langsung ke `main` (`origin main`)
-- Branch `main` adalah branch suci yang kodenya harus selalu bersih, stabil, dan bisa dijalankan tanpa error.
-- **Dilarang keras** melakukan `git push origin main`.
+- Branch `main` adalah branch utama yang kodenya harus selalu fix, work, bener, aman, tentram, stabil, dan bisa dijalankan tanpa error.
+- **Dilarang** melakukan `git push origin main`.
 - Semua perubahan harus masuk lewat fitur **Pull Request (PR)** di GitHub.
 
 ---
 
 ### 2. 1 Fitur / Entitas = 1 Branch Baru
-Jangan pernah koding di branch `main`. Selalu buat branch baru setiap kali mau mengerjakan fitur, fungsi, atau entitas baru.
+Jangan pernah ngoding di branch `main`. Selalu buat branch baru setiap kali mau mengerjakan fitur, fungsi, atau entitas baru.
 
 **Format penamaan branch:**
-- Fitur baru: `feat:<nama-fitur>`  
-  *Contoh:* `feat:login`, `feat:menu-transaksi`, `feat:crud-data`
-- Perbaikan bug: `fix:<nama-bug>`  
-  *Contoh:* `fix:hitung-total`, `fix:tampilan-tabel`
-- Penyesuaian: `refactor:<nama-tugas>`  
-  *Contoh:* `refactor:struktur-database`
+- Fitur baru: `feat/<nama-fitur>`  
+  *Contoh:* `feat/login`, `feat/menu-transaksi`, `feat/crud-data`
+- Perbaikan bug: `fix/<nama-bug>`  
+  *Contoh:* `fix/hitung-total`, `fix/tampilan-tabel`
+- Penyesuaian: `refactor/<nama-tugas>`  
+  *Contoh:* `refactor/struktur-database`
 
 ---
 
 ### 3. Selalu Update Branch Sebelum & Sesudah Koding
-Sebelum mulai ngetik kode baru, pastikan branch lokalmu up-to-date dengan kode terbaru yang ada di `main` agar tidak terjadi *merge conflict*:
+Sebelum mulai ngetik kode baru, samakan dulu kodemu yang ada di vscode (lokal) yang ada di `main` agar tidak terjadi *merge conflict*:
 
 ```bash
 # Pindah ke main dan tarik update terbaru dari GitHub
@@ -76,7 +76,7 @@ Jangan ngasih pesan commit gajelas kek `"update"`, `"fix"`, `"aowkwoak"`, atau `
 
 ---
 
-### 5. 🧪 Tes Sebelum Push
+### 5. Tes Sebelum Push
 Sebelum kamu melakukan push ke GitHub:
 1. Pastikan program kamu jalan tanpa error dengan menjalankan:
    ```bash
@@ -124,5 +124,11 @@ git commit -m "feat: deskripsi perubahan yang dibuat"
 # 5. Push branch kamu ke GitHub (hanya branch kamu, BUKAN main!)
 git push -u origin feat/nama-fitur-kamu
 
-# 6. Buka GitHub -> Klik "Compare & pull request" -> Minta review teman!
+# 6. Buka GitHub -> Klik "Compare & pull request" -> Minta review Diaz
 ```
+
+### Kalau kamu baca ampe akhir
+
+Pada akhirnya yang bener bener penting cuma peraturan nomor 1, 3, 5, 6, 7, yang lainnya opsional, tapi ya bagus kalau semuanya diikutin
+
+---

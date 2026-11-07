@@ -11,11 +11,15 @@ users = {
 request = {
     1: {
         "username": "Ben",
-        "jadwal": {
+        "jadwal_pengajuan": {
             "tanggal": "2026-11-06",
             "waktu": "22:53:13.657630",
         },
-        "status": "selesai",  # status request dari warga, selesai = sudah selesai, dll
+        "jadwal_pengambilan": {
+            "tanggal":"2026-11-06",
+            "waktu": "23:10:15.943222"
+        },
+        "status": "selesai",  # status request dari admin/petugas, selesai = sudah selesai, dll
         "catatan": "",
         "berat_sampah": 5,  # satuan berat kg secara default
     }

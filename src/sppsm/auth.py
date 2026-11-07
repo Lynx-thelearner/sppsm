@@ -17,7 +17,7 @@ def login():
     if users[username]["password"] == password:
         session["username"] = username
         session["role"] = users[username]["role"]
-        session["is_login"] = True 
+        session["is_login"] = True  
 
         print(f"\nLogin successful! Welcome, {username}.")
         print(f"Your role is: {session['role'].capitalize()}")
@@ -25,6 +25,7 @@ def login():
     else:
         print("Incorrect password. Please try again.")
         return False
+
 
 def register():
     print("\n" + "=" * 30)
@@ -44,13 +45,18 @@ def register():
         print("Passwords do not match. Please try again.")
         return False
 
-    lokasi = input("Enter your location (e.g., Blok A): ")
+    print("\n--- Data Lokasi ---")
+    blok = input("Enter your Block (e.g., A): ").upper()
+    no_rumah = input("Enter your House Number (e.g., 12): ")
+
+    lokasi_lengkap = f"Blok {blok} No. {no_rumah}"
 
     users[username] = {
         "password": password,
         "role": "warga",
-        "lokasi": lokasi
+        "lokasi": lokasi_lengkap
     }
     
     print(f"\nRegistration successful! You can now log in as {username}.")
+    print(f"📍 Your registered location: {lokasi_lengkap}")
     return True

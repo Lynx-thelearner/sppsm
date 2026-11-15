@@ -1,0 +1,1 @@
+session = {"username": None, "role": None, "is_login": False}

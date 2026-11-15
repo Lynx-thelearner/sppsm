@@ -1,10 +1,11 @@
+from .database import init_db
+
+
 def main() -> None:
-    print("Welcome to the fist commit")
-
-#Kerjaan Diaz
-
-import datetime as dt
-
-waktu = dt.datetime.now()
-
-print(waktu)
+    init_db()
+    
+    print("=== SPPSM ===")
+    print("Database berhasil disiapkan!")
+    
+if __name__ == "__main__":
+    main()

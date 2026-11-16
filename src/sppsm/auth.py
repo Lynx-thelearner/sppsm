@@ -58,5 +58,5 @@ def register():
     }
     
     print(f"\nRegistration successful! You can now log in as {username}.")
-    print(f"📍 Your registered location: {lokasi_lengkap}")
+    print(f"Your registered location: {lokasi_lengkap}")
     return True

@@ -1,6 +1,6 @@
 from .utils import clear
 import inquirer, os
-from .database import request, request_counter
+from .database import request
 from prettytable import PrettyTable
 
 

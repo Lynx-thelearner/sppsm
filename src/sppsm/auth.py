@@ -1,3 +1,4 @@
+feat/auth-login
 import pwinput
 from .database import users, session
 
@@ -60,3 +61,6 @@ def register():
     print(f"\nRegistration successful! You can now log in as {username}.")
     print(f"Your registered location: {lokasi_lengkap}")
     return True
+=======
+session = {"username": None, "role": None, "is_login": False}
+main

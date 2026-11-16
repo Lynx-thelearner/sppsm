@@ -59,7 +59,7 @@ def init_db():
             )
         """)
 
-    # 1. Isi data awal users jika tabel masih kosong
+    # seeding table users
     cursor.execute("SELECT COUNT(*) FROM users")
     if cursor.fetchone()[0] == 0:
         initial_users = [
@@ -72,10 +72,9 @@ def init_db():
             initial_users,
         )
 
-    # 2. Isi data awal requests jika tabel masih kosong
+    # seeding table requests
     cursor.execute("SELECT COUNT(*) FROM requests")
     if cursor.fetchone()[0] == 0:
-        # Ambil user_id dan alamat dari user 'BennyAdventureTeam'
         cursor.execute("SELECT user_id, alamat FROM users WHERE username = ?", ("BennyAdventureTeam",))
         user = cursor.fetchone()
 

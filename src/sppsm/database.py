@@ -48,7 +48,7 @@ def init_db():
                         'menunggu',
                         'selesai',
                         'ditolak',
-                        'dibatalkan
+                        'dibatalkan'
                     )
                 ),
                 catatan TEXT,

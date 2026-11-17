@@ -63,9 +63,30 @@ def init_db():
     cursor.execute("SELECT COUNT(*) FROM users")
     if cursor.fetchone()[0] == 0:
         initial_users = [
-            ("Fysortheguy", hash_password("hafizh123"), "Hafizh", "Kantor", "081223548632", "admin"),
-            ("Tomgun", hash_password("tom123"), "Tommy", "Kantor", "0838557891012", "petugas"),
-            ("BennyAdventureTeam", hash_password("ben123"), "Bennet", "Blok A", "083855754782", "warga"),
+            (
+                "Fysortheguy",
+                hash_password("hafizh123"),
+                "Hafizh",
+                "Kantor",
+                "081223548632",
+                "admin",
+            ),
+            (
+                "Tomgun",
+                hash_password("tom123"),
+                "Tommy",
+                "Kantor",
+                "0838557891012",
+                "petugas",
+            ),
+            (
+                "BennyAdventureTeam",
+                hash_password("ben123"),
+                "Bennet",
+                "Blok A",
+                "083855754782",
+                "warga",
+            ),
         ]
         cursor.executemany(
             "INSERT INTO users (username, password, nama, alamat, no_telepon, role) VALUES (?, ?, ?, ?, ?, ?)",
@@ -75,7 +96,10 @@ def init_db():
     # seeding table requests
     cursor.execute("SELECT COUNT(*) FROM requests")
     if cursor.fetchone()[0] == 0:
-        cursor.execute("SELECT user_id, alamat FROM users WHERE username = ?", ("BennyAdventureTeam",))
+        cursor.execute(
+            "SELECT user_id, alamat FROM users WHERE username = ?",
+            ("BennyAdventureTeam",),
+        )
         user = cursor.fetchone()
 
         if user:

@@ -1,66 +1,111 @@
-feat/auth-login
 import pwinput
-from .database import users, session
+import sqlite3
+from typing import Any
 
-def login():
-    print("\n" + "=" * 30)
-    print("LOGIN MENU")
-    print("=" * 30) 
+from .database import get_connection
+from .utils import clear_screen, hash_password, pause, verify_password
 
-    username = input("Enter your username: ")
+session: dict[str, Any] = {
+    "user_id": None,
+    "username": None,
+    "nama": None,
+    "role": None,
+    "alamat": None,
+    "no_telepon": None,
+    "is_login": False,
+}
 
-    if username not in users:
-        print("User does not exist. Please register first.")
-        return False
+def set_session(user_row: Any) -> None:
+    session["user_id"] = user_row["user_id"]
+    session["username"] = user_row["username"]
+    session["nama"] = user_row["nama"]
+    session["role"] = user_row["role"]
+    session["alamat"] = user_row["alamat"]
+    session["no_telepon"] = user_row["no_telepon"]
+    session["is_login"] = True
 
-    password = pwinput.pwinput(prompt="Enter your password: ", mask="*")
+def login() -> bool:
+    clear_screen()
+    print("=" * 40)
+    print("            MENU LOGIN SPPSM            ")
+    print("=" * 40)
 
-    if users[username]["password"] == password:
-        session["username"] = username
-        session["role"] = users[username]["role"]
-        session["is_login"] = True  
+    username = input("Username : ").strip()
+    password = pwinput.pwinput(prompt="Password : ", mask="*")
 
-        print(f"\nLogin successful! Welcome, {username}.")
-        print(f"Your role is: {session['role'].capitalize()}")
-        return True
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+    user = cursor.fetchone()
+
+    if user:
+        if verify_password(password, user["password"]):
+            set_session(user)
+            print("\nLogin Berhasil!")
+            print(f"Selamat datang, {session['nama']} ({session['role'].capitalize()}).")
+            conn.close()
+            pause()
+            return True
+        else:
+            print("\nPassword salah. Silakan coba lagi.")
     else:
-        print("Incorrect password. Please try again.")
+        print("\nUsername tidak ditemukan. Silakan daftar terlebih dahulu.")
+
+    conn.close()
+    pause()
+    return False
+
+def register() -> bool:
+    clear_screen()
+    print("=" * 40)
+    print("        REGISTRASI WARGA BARU SPPSM       ")
+    print("=" * 40)
+
+    username = input("Username Baru : ").strip()
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+    if cursor.fetchone():
+        print("\nUsername sudah digunakan. Silakan pilih yang lain.")
+        conn.close()
+        pause()
         return False
 
-
-def register():
-    print("\n" + "=" * 30)
-    print("REGISTRATION MENU")
-    print("=" * 30) 
-
-    username = input("Enter a username: ")
-
-    if username in users:
-        print("Username already exists. Please choose a different username.")
-        return False
-
-    password = pwinput.pwinput(prompt="Enter a password: ", mask="*")
-    confirm_password = pwinput.pwinput(prompt="Confirm your password: ", mask="*")
+    password = pwinput.pwinput(prompt="Password Baru : ", mask="*")
+    confirm_password = pwinput.pwinput(prompt="Konfirmasi Password : ", mask="*")
 
     if password != confirm_password:
-        print("Passwords do not match. Please try again.")
+        print("\nPassword tidak cocok. Silakan ulangi.")
+        conn.close()
+        pause()
         return False
 
-    print("\n--- Data Lokasi ---")
-    blok = input("Enter your Block (e.g., A): ").upper()
-    no_rumah = input("Enter your House Number (e.g., 12): ")
+    print("\n--- Lengkapi Data Diri Anda ---")
+    nama = input("Nama Lengkap    : ").strip()
+    alamat = input("Alamat (Blok/No): ").strip()
+    no_telepon = input("No. Telepon     : ").strip()
 
-    lokasi_lengkap = f"Blok {blok} No. {no_rumah}"
+    hashed_pw = hash_password(password)
 
-    users[username] = {
-        "password": password,
-        "role": "warga",
-        "lokasi": lokasi_lengkap
-    }
-    
-    print(f"\nRegistration successful! You can now log in as {username}.")
-    print(f"Your registered location: {lokasi_lengkap}")
-    return True
-=======
-session = {"username": None, "role": None, "is_login": False}
-main
+    try:
+        cursor.execute(
+            """
+            INSERT INTO users (username, password, nama, alamat, no_telepon, role) 
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (username, hashed_pw, nama, alamat, no_telepon, "warga")
+        )
+        conn.commit()
+        print("\nRegistrasi Berhasil! Silakan login menggunakan akun baru Anda.")
+        pause()
+        return True
+    except sqlite3.Error as e:
+        print(f"\nTerjadi kesalahan database: {e}")
+        pause()
+        return False
+    finally:
+        conn.close()
+        

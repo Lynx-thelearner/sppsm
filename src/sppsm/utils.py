@@ -1,7 +1,9 @@
 import os
 import hashlib, secrets
 
-clear = "cls" if os.name == "nt" else "clear"
+
+def clear():
+    os.system("cls" if os.name == "nt" else "clear")
 
 
 def hash_password(password: str):

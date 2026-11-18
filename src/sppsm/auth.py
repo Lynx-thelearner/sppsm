@@ -1,11 +1,11 @@
 import pwinput
 import sqlite3
-from typing import Any
 
 from .database import get_connection
-from .utils import clear_screen, hash_password, pause, verify_password
+from .utils import hash_password, verify_password
 
-session: dict[str, Any] = {
+# Session buat nyimpen data user yang lagi login
+session = {
     "user_id": None,
     "username": None,
     "nama": None,
@@ -15,50 +15,46 @@ session: dict[str, Any] = {
     "is_login": False,
 }
 
-def set_session(user_row: Any) -> None:
-    session["user_id"] = user_row["user_id"]
-    session["username"] = user_row["username"]
-    session["nama"] = user_row["nama"]
-    session["role"] = user_row["role"]
-    session["alamat"] = user_row["alamat"]
-    session["no_telepon"] = user_row["no_telepon"]
-    session["is_login"] = True
-
-def login() -> bool:
-    clear_screen()
-    print("=" * 40)
+def login():
+    print("\n" + "=" * 40)
     print("            MENU LOGIN SPPSM            ")
     print("=" * 40)
 
     username = input("Username : ").strip()
-    password = pwinput.pwinput(prompt="Password : ", mask="*")
+    password = pwinput.pwinput(prompt="Password : ", mask="*").strip()
 
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
     user = cursor.fetchone()
-
+    
     if user:
+        # PAKAI VERIFY_PASSWORD DARI UTILS
         if verify_password(password, user["password"]):
-            set_session(user)
+            session["user_id"] = user["user_id"]
+            session["username"] = user["username"]
+            session["nama"] = user["nama"]
+            session["role"] = user["role"]
+            session["alamat"] = user["alamat"]
+            session["no_telepon"] = user["no_telepon"]
+            session["is_login"] = True
+
             print("\nLogin Berhasil!")
-            print(f"Selamat datang, {session['nama']} ({session['role'].capitalize()}).")
+            print(f"Selamat datang, {session['nama']} ({session['role']}).")
             conn.close()
-            pause()
             return True
         else:
-            print("\nPassword salah. Silakan coba lagi.")
+            print("\nPassword salah.")
     else:
-        print("\nUsername tidak ditemukan. Silakan daftar terlebih dahulu.")
-
+        print("\nUsername tidak ditemukan, silakan daftar dulu.")
+    
     conn.close()
-    pause()
     return False
 
-def register() -> bool:
-    clear_screen()
-    print("=" * 40)
+
+def register():
+    print("\n" + "=" * 40)
     print("        REGISTRASI WARGA BARU SPPSM       ")
     print("=" * 40)
 
@@ -67,45 +63,52 @@ def register() -> bool:
     conn = get_connection()
     cursor = conn.cursor()
 
+    # Cek username udah dipake apa belum
     cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
     if cursor.fetchone():
-        print("\nUsername sudah digunakan. Silakan pilih yang lain.")
+        print("\nUsername sudah dipakai, cari yang lain.")
         conn.close()
-        pause()
         return False
 
     password = pwinput.pwinput(prompt="Password Baru : ", mask="*")
     confirm_password = pwinput.pwinput(prompt="Konfirmasi Password : ", mask="*")
 
     if password != confirm_password:
-        print("\nPassword tidak cocok. Silakan ulangi.")
+        print("\nPassword tidak cocok.")
         conn.close()
-        pause()
         return False
 
-    print("\n--- Lengkapi Data Diri Anda ---")
+    print("\n--- Isi Data Diri ---")
     nama = input("Nama Lengkap    : ").strip()
     alamat = input("Alamat (Blok/No): ").strip()
     no_telepon = input("No. Telepon     : ").strip()
 
-    hashed_pw = hash_password(password)
-
     try:
+        # Masukin data ke database
         cursor.execute(
             """
             INSERT INTO users (username, password, nama, alamat, no_telepon, role) 
             VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (username, hashed_pw, nama, alamat, no_telepon, "warga")
+            (username, hash_password(password), nama, alamat, no_telepon, "warga")
         )
         conn.commit()
-        print("\nRegistrasi Berhasil! Silakan login menggunakan akun baru Anda.")
-        pause()
+        print("\nRegistrasi Berhasil! Silakan login.")
         return True
     except sqlite3.Error as e:
-        print(f"\nTerjadi kesalahan database: {e}")
-        pause()
+        print(f"\nGagal daftar: {e}")
         return False
     finally:
         conn.close()
-        
+
+
+def logout():
+    # Reset session jadi kosong lagi
+    session["user_id"] = None
+    session["username"] = None
+    session["nama"] = None
+    session["role"] = None
+    session["alamat"] = None
+    session["no_telepon"] = None
+    session["is_login"] = False
+    print("\nBerhasil logout.")

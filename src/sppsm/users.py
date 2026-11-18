@@ -1,10 +1,12 @@
 import sqlite3
 import inquirer
+import pwinput
+from prettytable import PrettyTable
 from .database import get_connection
-from .utils import hash_password
+from .utils import hash_password, clear
 
 
-# buat tampilkan user (read)
+# Ambil semua data user dari database
 def get_user():
     conn = get_connection()
     try:
@@ -16,18 +18,61 @@ def get_user():
         conn.close()
 
 
-# buat create user
-def create_user(role="warga"):
-    print("\n=== REGISTRASI AKUN BARU ===")
-
-    if role not in ("warga", "petugas", "admin"):
-        print(f"Role '{role}' Tidak valid!")
+# Tampilkan user (Read)
+def read_user():
+    clear()
+    users = get_user()
+    if not users:
+        print("\nBelum ada data users di database.")
+        input("\nTekan Enter untuk kembali ke menu...")
         return
 
+    tabel = PrettyTable()
+    tabel.field_names = ["ID", "Username", "Nama", "Alamat", "No. Telepon", "Role"]
+    tabel.align["Username"] = "l"
+    tabel.align["Nama"] = "l"
+    tabel.align["Alamat"] = "l"
+    tabel.align["Role"] = "l"
+    tabel._max_width = {"Alamat": 30}
+
+    for u in users:
+        tabel.add_row(
+            [
+                u["user_id"],
+                u["username"],
+                u["nama"],
+                u["alamat"],
+                u["no_telepon"] or "-",
+                u["role"],
+            ]
+        )
+
+    print("\n=== DAFTAR USER ===")
+    print(tabel)
+    input("\nTekan Enter untuk kembali ke menu...")
+
+
+# Buat user baru (Create)
+def create_user(role="warga"):
+    clear()
+    print("\n=== REGISTRASI AKUN BARU ===")
+    print("(Ketik '0' pada username untuk kembali ke menu)\n")
+
+    if role not in ("warga", "petugas", "admin"):
+        print(f"Role '{role}' tidak valid!")
+        input("\nTekan Enter untuk kembali ke menu...")
+        return
+
+    # Input & validasi username
     while True:
-        username = input("Masukkan username anda: ").strip()
+        username = input("Masukkan username anda (maks 20 karakter): ").strip()
+        if username == "0":
+            return
         if not username:
             print("Username tidak boleh kosong! Coba lagi.")
+            continue
+        if len(username) > 20:
+            print("Username tidak boleh lebih dari 20 karakter! Coba lagi.")
             continue
 
         conn = get_connection()
@@ -37,24 +82,38 @@ def create_user(role="warga"):
         conn.close()
 
         if cek:
-            print(f"Username {username} sudah terpakai! Pilih yang lain.")
+            print(f"Username '{username}' sudah terpakai! Pilih yang lain.")
         else:
             break
 
+    # Input & konfirmasi password (pakai masking "*")
     while True:
-        password = input("Masukkan password anda: ").strip()
+        password = pwinput.pwinput(prompt="Masukkan password anda: ", mask="*").strip()
         if not password:
             print("Password tidak boleh kosong! Coba lagi.")
+            continue
+
+        konfirmasi_password = pwinput.pwinput(
+            prompt="Konfirmasi password anda: ", mask="*"
+        ).strip()
+
+        if password != konfirmasi_password:
+            print("Password tidak cocok! Silakan ulangi dari awal.\n")
         else:
             break
 
+    # Input nama
     while True:
-        nama = input("Masukkan nama anda: ").strip()
+        nama = input("Masukkan nama anda (maks 20 karakter): ").strip()
         if not nama:
             print("Nama tidak boleh kosong! Coba lagi.")
-        else:
-            break
+            continue
+        if len(nama) > 20:
+            print("Nama tidak boleh lebih dari 20 karakter! Coba lagi.")
+            continue
+        break
 
+    # Input alamat
     while True:
         alamat = input("Masukkan alamat anda: ").strip()
         if not alamat:
@@ -62,10 +121,16 @@ def create_user(role="warga"):
         else:
             break
 
-    no_telepon = input(
-        "Masukkan nomor telepon anda (Opsional, tekan Enter jika kosong): "
-    ).strip()
-    no_telepon = no_telepon if no_telepon else None
+    # Input nomor telepon (opsional)
+    while True:
+        no_telepon = input(
+            "Masukkan nomor telepon anda (Opsional, maks 20 karakter, tekan Enter jika kosong): "
+        ).strip()
+        if len(no_telepon) > 20:
+            print("Nomor telepon tidak boleh lebih dari 20 karakter! Coba lagi.")
+            continue
+        no_telepon = no_telepon if no_telepon else None
+        break
 
     conn = get_connection()
     try:
@@ -77,19 +142,23 @@ def create_user(role="warga"):
             (username, hash_password(password), nama, alamat, no_telepon, role),
         )
         conn.commit()
-        print(f"\nAkun '{username}' sebagai {role} berhasil dibuat!")
+        print(f"\n[Sukses] Akun '{username}' sebagai {role} berhasil dibuat!")
     except sqlite3.Error as e:
         print(f"\nGagal menyimpan data: {e}")
     finally:
         conn.close()
 
+    input("\nTekan Enter untuk kembali ke menu...")
 
-# update user (update)
+
+# Ubah data user (Update)
 def update_user():
+    clear()
     print("\n=== UPDATE DATA USER ===")
     users = get_user()
     if not users:
         print("Belum ada data user di database.")
+        input("\nTekan Enter untuk kembali ke menu...")
         return
 
     for u in users:
@@ -99,7 +168,16 @@ def update_user():
 
     while True:
         try:
-            target_id = int(input("\nMasukkan user_id yang ingin diupdate: ").strip())
+            target_id = int(
+                input(
+                    "\nMasukkan user_id yang ingin diupdate (Tekan 0 untuk kembali ke menu): "
+                ).strip()
+            )
+            if target_id == 0:
+                return
+            if target_id < 0 or target_id > 9223372036854775807:
+                print("user_id tidak valid atau terlalu besar!")
+                continue
             break
         except ValueError:
             print("user_id harus berupa angka!")
@@ -112,23 +190,122 @@ def update_user():
 
     if not user_lama:
         print(f"User dengan ID {target_id} tidak ditemukan!")
+        input("\nTekan Enter untuk kembali ke menu...")
         return
 
-    print(
-        f"\nMengedit user: {user_lama['username']} (Tekan enter jika tidak ingin mengubah kolom)"
-    )
+    # Simpan data sementara agar bisa di edit berkali kali sebelum di commit
+    nama_baru = user_lama["nama"]
+    alamat_baru = user_lama["alamat"]
+    telp_baru = user_lama["no_telepon"]
+    pass_baru = user_lama["password"]
 
-    nama_baru = input(f"Nama [{user_lama['nama']}]: ").strip() or user_lama["nama"]
-    alamat_baru = (
-        input(f"Alamat [{user_lama['alamat']}]: ").strip() or user_lama["alamat"]
-    )
+    while True:
+        clear()
+        print("=== UPDATE DATA USER ===")
+        print(f"Target User : {user_lama['username']} (ID: {target_id})")
+        print(f"Nama        : {nama_baru}")
+        print(f"Alamat      : {alamat_baru}")
+        print(f"No. Telepon : {telp_baru or '-'}")
+        print("-" * 35)
 
-    telp_lama = user_lama["no_telepon"] or ""
-    telp_input = input(f"No. Telepon [{telp_lama}]: ").strip()
-    telp_baru = telp_input if telp_input else user_lama["no_telepon"]
+        pertanyaan = [
+            inquirer.List(
+                "kolom",
+                message="Pilih data yang ingin diubah:",
+                choices=[
+                    "1. Nama",
+                    "2. Alamat",
+                    "3. No. Telepon",
+                    "4. Password",
+                    "5. Simpan perubahan dan selesai",
+                    "6. Batal (buang perubahan)",
+                ],
+            )
+        ]
 
-    pass_input = input("Password baru (Kosongkan jika tidak diganti): ").strip()
-    pass_baru = hash_password(pass_input) if pass_input else user_lama["password"]
+        jawaban = inquirer.prompt(pertanyaan)
+        pilihan = jawaban["kolom"][0] if jawaban else "6"
+
+        if pilihan == "1":
+            while True:
+                input_nama = input("\nMasukkan nama baru (maks 20 karakter): ").strip()
+                if not input_nama:
+                    print("Nama tidak boleh kosong!")
+                    continue
+                if len(input_nama) > 20:
+                    print("Nama tidak boleh lebih dari 20 karakter!")
+                    continue
+                nama_baru = input_nama
+                print("Nama berhasil diubah sementara.")
+                break
+
+        elif pilihan == "2":
+            while True:
+                input_alamat = input("\nMasukkan alamat baru: ").strip()
+                if not input_alamat:
+                    print("Alamat tidak boleh kosong!")
+                else:
+                    alamat_baru = input_alamat
+                    print("Alamat berhasil diubah sementara.")
+                    break
+
+        elif pilihan == "3":
+            while True:
+                input_telp = input(
+                    "\nMasukkan nomor telepon baru (maks 20 karakter, Kosongkan/Enter untuk menghapus nomor): "
+                ).strip()
+                if len(input_telp) > 20:
+                    print("Nomor telepon tidak boleh lebih dari 20 karakter!")
+                    continue
+                telp_baru = input_telp if input_telp else None
+                print("No. Telepon berhasil diubah sementara.")
+                break
+
+        elif pilihan == "4":
+            while True:
+                pass_input = pwinput.pwinput(
+                    prompt="\nMasukkan password baru: ", mask="*"
+                ).strip()
+                if not pass_input:
+                    print("Password tidak boleh kosong!")
+                    continue
+
+                konfirmasi_pass = pwinput.pwinput(
+                    prompt="Konfirmasi password baru: ", mask="*"
+                ).strip()
+                if pass_input != konfirmasi_pass:
+                    print("Password tidak cocok! Silakan ulangi.\n")
+                else:
+                    pass_baru = hash_password(pass_input)
+                    print("Password berhasil diubah sementara.")
+                    break
+
+        elif pilihan == "5":
+            break
+
+        elif pilihan == "6":
+            print("\nPerubahan dibatalkan. Data tidak disimpan.")
+            input("\nTekan Enter untuk kembali ke menu...")
+            return
+
+        lanjut = (
+            input("\nMasih ingin mengupdate data lainnya pada user ini? [y/n]: ")
+            .strip()
+            .lower()
+        )
+        if lanjut != "y":
+            break
+
+    # Cek apakah ada data yang berubah sebelum menulis ke database
+    if (
+        nama_baru == user_lama["nama"]
+        and alamat_baru == user_lama["alamat"]
+        and telp_baru == user_lama["no_telepon"]
+        and pass_baru == user_lama["password"]
+    ):
+        print("\nTidak ada data yang diubah.")
+        input("\nTekan Enter untuk kembali ke menu...")
+        return
 
     conn = get_connection()
     try:
@@ -141,19 +318,25 @@ def update_user():
             (nama_baru, alamat_baru, telp_baru, pass_baru, target_id),
         )
         conn.commit()
-        print(f"\nData user ID {target_id} berhasil diperbarui!")
+        print(
+            f"\n[Sukses] Data user '{user_lama['username']}' berhasil diperbarui secara permanen."
+        )
     except sqlite3.Error as e:
         print(f"\nGagal mengupdate user: {e}")
     finally:
         conn.close()
 
+    input("\nTekan Enter untuk kembali ke menu...")
 
-# delete user (delete)
+
+# Hapus user (Delete)
 def delete_user():
+    clear()
     print("\n=== HAPUS DATA USER ===")
     users = get_user()
     if not users:
         print("Belum ada data user di database.")
+        input("\nTekan Enter untuk kembali ke menu...")
         return
 
     for u in users:
@@ -163,7 +346,16 @@ def delete_user():
 
     while True:
         try:
-            target_id = int(input("\nMasukkan user_id yang ingin dihapus: ").strip())
+            target_id = int(
+                input(
+                    "\nMasukkan user_id yang ingin dihapus (Tekan 0 untuk kembali ke menu): "
+                ).strip()
+            )
+            if target_id == 0:
+                return
+            if target_id < 0 or target_id > 9223372036854775807:
+                print("user_id tidak valid atau terlalu besar!")
+                continue
             break
         except ValueError:
             print("user_id harus berupa angka!")
@@ -176,6 +368,7 @@ def delete_user():
 
     if not user_target:
         print(f"User dengan ID {target_id} tidak ditemukan!")
+        input("\nTekan Enter untuk kembali ke menu...")
         return
 
     konfirmasi = (
@@ -187,6 +380,7 @@ def delete_user():
     )
     if konfirmasi != "y":
         print("Penghapusan dibatalkan.")
+        input("\nTekan Enter untuk kembali ke menu...")
         return
 
     conn = get_connection()
@@ -199,31 +393,42 @@ def delete_user():
     finally:
         conn.close()
 
+    input("\nTekan Enter untuk kembali ke menu...")
 
-# MENU TESTING CRUD (INI BUAT NGE TES AJA, HAPUS AJA NANTI)
-if __name__ == "__main__":
+
+# Menu utama CRUD User
+def menu_crud_user():
     while True:
-        print("\n=== TEST CRUD USERS ===")
-        print("1. Lihat semua user (Read)")
-        print("2. Tambah user baru (Create)")
-        print("3. Edit user (Update)")
-        print("4. Hapus user (Delete)")
-        print("0. Keluar")
+        clear()
+        pertanyaan = [
+            inquirer.List(
+                "pilihan",
+                message="=== MENU CRUD USER ===",
+                choices=[
+                    "1. Create user",
+                    "2. Read user",
+                    "3. Update user",
+                    "4. Delete user",
+                    "5. Kembali / Keluar",
+                ],
+            )
+        ]
 
-        pilihan = input("Pilih menu [0-4]: ").strip()
+        jawaban = inquirer.prompt(pertanyaan)
+        pilihan = jawaban["pilihan"][0] if jawaban else "5"
 
         if pilihan == "1":
-            print("\n=== DAFTAR USER ===")
-            for row in get_user():
-                print(dict(row))
-        elif pilihan == "2":
             create_user()
+        elif pilihan == "2":
+            read_user()
         elif pilihan == "3":
             update_user()
         elif pilihan == "4":
             delete_user()
-        elif pilihan == "0":
-            print("Selesai testing.")
-            break
         else:
-            print("Pilihan tidak valid!")
+            clear()
+            break
+
+
+if __name__ == "__main__":
+    menu_crud_user()

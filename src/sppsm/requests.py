@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import sqlite3
 from datetime import datetime
 import inquirer
@@ -589,3 +590,5 @@ def menu_crud_requests():
 
 if __name__ == "__main__":
     menu_crud_requests()
+=======
+>>>>>>> 14b5a5a (feat: adding functions and detailling on every entities)

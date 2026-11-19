@@ -1,7 +1,11 @@
+import os
 import sqlite3
+
 from .utils import hash_password
 
-db_name = "sppsm.db"
+db_name = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", "sppsm.db"
+)
 
 
 def get_connection():

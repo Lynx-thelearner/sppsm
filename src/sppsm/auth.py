@@ -1,8 +1,10 @@
-import pwinput
 import sqlite3
 
+import inquirer
+import pwinput
+
 from .database import get_connection
-from .utils import hash_password, verify_password
+from .utils import clear, hash_password, verify_password, enter
 
 # Session buat nyimpen data user yang lagi login
 session = {
@@ -14,6 +16,7 @@ session = {
     "no_telepon": None,
     "is_login": False,
 }
+
 
 def login():
     print("\n" + "=" * 40)
@@ -28,7 +31,7 @@ def login():
 
     cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
     user = cursor.fetchone()
-    
+
     if user:
         # PAKAI VERIFY_PASSWORD DARI UTILS
         if verify_password(password, user["password"]):
@@ -42,13 +45,16 @@ def login():
 
             print("\nLogin Berhasil!")
             print(f"Selamat datang, {session['nama']} ({session['role']}).")
+            enter()
             conn.close()
             return True
         else:
             print("\nPassword salah.")
+            enter()
     else:
         print("\nUsername tidak ditemukan, silakan daftar dulu.")
-    
+        enter()
+
     conn.close()
     return False
 
@@ -59,7 +65,7 @@ def register():
     print("=" * 40)
 
     username = input("Username Baru : ").strip()
-    
+
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -90,7 +96,7 @@ def register():
             INSERT INTO users (username, password, nama, alamat, no_telepon, role) 
             VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (username, hash_password(password), nama, alamat, no_telepon, "warga")
+            (username, hash_password(password), nama, alamat, no_telepon, "warga"),
         )
         conn.commit()
         print("\nRegistrasi Berhasil! Silakan login.")
@@ -112,3 +118,21 @@ def logout():
     session["no_telepon"] = None
     session["is_login"] = False
     print("\nBerhasil logout.")
+
+
+def auth_menu():
+    clear()
+    pertanyaan = [
+        inquirer.List(
+            "pilihan",
+            message="=== Menu Akun ===",
+            choices=[
+                ("Login", "1"),
+                ("Register", "2"),
+                ("Exit", "3"),
+            ],
+        )
+    ]
+
+    jawaban = inquirer.prompt(pertanyaan)
+    return jawaban["pilihan"] if jawaban else "3"

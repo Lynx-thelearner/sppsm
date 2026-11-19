@@ -1,31 +1,35 @@
+import math
 from contextlib import closing
-import inquirer, os, math
+
+import inquirer
 from prettytable import PrettyTable
-from .utils import clear
+
+from .auth import logout
 from .database import get_connection
+from .utils import clear
 
 
 def menu_petugas():
-    os.system(clear)
+    clear()
 
     pertanyaan = [
         inquirer.List(
             "pilihan",
             message="=== Menu Petugas ===",
             choices=[
-                    ("Lihat Request", "1"),
-                    ("Update Request", "2"),
-                    ("Logout", "3"),
+                ("Lihat Request", "1"),
+                ("Update Request", "2"),
+                ("Logout", "3"),
             ],
         )
     ]
 
     jawaban = inquirer.prompt(pertanyaan)
-    return jawaban["pilihan"][0] if jawaban else "3"
+    return jawaban["pilihan"] if jawaban else "3"
 
 
 def get_menunggu_request():
-    os.system(clear)
+    clear()
 
     with closing(get_connection()) as conn:
         cursor = conn.cursor()
@@ -66,7 +70,7 @@ def get_menunggu_request():
 
 
 def edit_requests_petugas():
-    os.system(clear)
+    clear()
 
     data = get_menunggu_request()
     if not data:
@@ -121,7 +125,9 @@ def edit_requests_petugas():
     if status_baru == "selesai":
         while True:
             try:
-                berat_input = input("Masukkan berat sampah (kg): ").strip().replace(",",".")
+                berat_input = (
+                    input("Masukkan berat sampah (kg): ").strip().replace(",", ".")
+                )
                 berat = float(berat_input)
                 if not math.isfinite(berat) or berat <= 0:
                     print("Berat sampah harus diatas 0")
@@ -154,7 +160,7 @@ def edit_requests_petugas():
             print("Request tidak ditemukan atau sudah diproses")
             input("\nTekan Enter untuk kembali...")
             return
-            
+
         conn.commit()
 
     print(f"\n[SUKSES] request #{req_id} berhasil diupdate menjadi '{status_baru}'")
@@ -173,9 +179,9 @@ def jalankan_menu_petugas():
             edit_requests_petugas()
         elif pilihan == "3":
             print("\nLogout berhasil.")
+            logout()
             break
 
 
 if __name__ == "__main__":
-    hasil = jalankan_menu_petugas()
-    print(hasil)
+    jalankan_menu_petugas()

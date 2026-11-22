@@ -1,5 +1,10 @@
+import hashlib
 import os
-import hashlib, secrets
+import secrets
+
+
+def enter():
+    input("\nTekan untuk melanjutkan")
 
 
 def clear():

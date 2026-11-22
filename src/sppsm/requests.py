@@ -1,7 +1,9 @@
 import sqlite3
 from datetime import datetime
+
 import inquirer
 from prettytable import PrettyTable
+
 from .database import get_connection
 from .utils import clear
 
@@ -32,7 +34,7 @@ def _tampilkan_tabel_requests(data):
         "ID",
         "Pengaju",
         "Tgl Pengajuan",
-        "Jadwal Jemput",
+        "tanggal Jemput",
         "Berat (kg)",
         "Alamat",
         "Status",
@@ -40,7 +42,7 @@ def _tampilkan_tabel_requests(data):
     ]
     tabel.align["Pengaju"] = "l"
     tabel.align["Tgl Pengajuan"] = "l"
-    tabel.align["Jadwal Jemput"] = "l"
+    tabel.align["tanggal Jemput"] = "l"
     tabel.align["Berat (kg)"] = "r"
     tabel.align["Alamat"] = "l"
     tabel.align["Status"] = "l"
@@ -61,7 +63,7 @@ def _tampilkan_tabel_requests(data):
                 r["request_id"],
                 pengaju,
                 r["tanggal_pengajuan"],
-                r["jadwal_penjemputan"] or "-",
+                r["tanggal_penjemputan"] or "-",
                 berat,
                 r["alamat"],
                 r["status"],
@@ -164,11 +166,11 @@ def create_request():
     tgl_input = input(f"Tanggal pengajuan [Enter untuk '{waktu_sekarang}']: ").strip()
     tanggal_pengajuan = tgl_input if tgl_input else waktu_sekarang
 
-    # Jadwal penjemputan (opsional)
-    jadwal_input = input(
-        "Jadwal penjemputan (Contoh: 2026-11-20 09:00:00, Enter jika belum ada): "
+    # tanggal penjemputan (opsional)
+    tanggal_input = input(
+        "tanggal penjemputan (Contoh: 2026-11-20 09:00:00, Enter jika belum ada): "
     ).strip()
-    jadwal_penjemputan = jadwal_input if jadwal_input else None
+    tanggal_penjemputan = tanggal_input if tanggal_input else None
 
     # Berat sampah (opsional, >= 0)
     while True:
@@ -204,7 +206,7 @@ def create_request():
         conn.execute(
             """
             INSERT INTO requests (
-                user_id, tanggal_pengajuan, jadwal_penjemputan,
+                user_id, tanggal_pengajuan, tanggal_penjemputan,
                 berat_sampah, alamat, status, catatan
             )
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -212,7 +214,7 @@ def create_request():
             (
                 user_id,
                 tanggal_pengajuan,
-                jadwal_penjemputan,
+                tanggal_penjemputan,
                 berat_sampah,
                 alamat,
                 status,
@@ -273,7 +275,7 @@ def update_request():
     # Simpan nilai sementara sebelum disimpan permanen
     user_id_baru = req_lama["user_id"]
     tgl_pengajuan_baru = req_lama["tanggal_pengajuan"]
-    jadwal_baru = req_lama["jadwal_penjemputan"]
+    tanggal_baru = req_lama["tanggal_penjemputan"]
     berat_baru = req_lama["berat_sampah"]
     alamat_baru = req_lama["alamat"]
     status_baru = req_lama["status"]
@@ -297,7 +299,7 @@ def update_request():
         print(f"Request ID         : {target_id}")
         print(f"Pengaju            : {label_pengaju}")
         print(f"Tanggal Pengajuan  : {tgl_pengajuan_baru}")
-        print(f"Jadwal Penjemputan : {jadwal_baru or '-'}")
+        print(f"tanggal Penjemputan : {tanggal_baru or '-'}")
         print(f"Berat Sampah (kg)  : {berat_baru if berat_baru is not None else '-'}")
         print(f"Alamat             : {alamat_baru}")
         print(f"Status             : {status_baru}")
@@ -311,7 +313,7 @@ def update_request():
                 choices=[
                     "1. Pengaju (user_id)",
                     "2. Tanggal Pengajuan",
-                    "3. Jadwal Penjemputan",
+                    "3. tanggal Penjemputan",
                     "4. Berat Sampah (kg)",
                     "5. Alamat Penjemputan",
                     "6. Status Request",
@@ -365,11 +367,11 @@ def update_request():
                     break
 
         elif pilihan == "3":
-            input_jadwal = input(
-                "\nMasukkan jadwal penjemputan baru (Kosongkan/Enter untuk menghapus jadwal): "
+            input_tanggal = input(
+                "\nMasukkan tanggal penjemputan baru (Kosongkan/Enter untuk menghapus tanggal): "
             ).strip()
-            jadwal_baru = input_jadwal if input_jadwal else None
-            print("Jadwal penjemputan berhasil diubah sementara.")
+            tanggal_baru = input_tanggal if input_tanggal else None
+            print("tanggal penjemputan berhasil diubah sementara.")
 
         elif pilihan == "4":
             while True:
@@ -440,7 +442,7 @@ def update_request():
     if (
         user_id_baru == req_lama["user_id"]
         and tgl_pengajuan_baru == req_lama["tanggal_pengajuan"]
-        and jadwal_baru == req_lama["jadwal_penjemputan"]
+        and tanggal_baru == req_lama["tanggal_penjemputan"]
         and berat_baru == req_lama["berat_sampah"]
         and alamat_baru == req_lama["alamat"]
         and status_baru == req_lama["status"]
@@ -457,7 +459,7 @@ def update_request():
             UPDATE requests
             SET user_id = ?,
                 tanggal_pengajuan = ?,
-                jadwal_penjemputan = ?,
+                tanggal_penjemputan = ?,
                 berat_sampah = ?,
                 alamat = ?,
                 status = ?,
@@ -467,7 +469,7 @@ def update_request():
             (
                 user_id_baru,
                 tgl_pengajuan_baru,
-                jadwal_baru,
+                tanggal_baru,
                 berat_baru,
                 alamat_baru,
                 status_baru,

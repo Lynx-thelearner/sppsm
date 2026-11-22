@@ -1,9 +1,11 @@
 import sqlite3
+
 import inquirer
 import pwinput
 from prettytable import PrettyTable
+
 from .database import get_connection
-from .utils import hash_password, clear
+from .utils import clear, hash_password
 
 
 # Ambil semua data user dari database
@@ -418,7 +420,33 @@ def menu_crud_user():
         pilihan = jawaban["pilihan"][0] if jawaban else "5"
 
         if pilihan == "1":
-            create_user()
+            while True:
+                pertanyaan = [
+                    inquirer.List(
+                        "pilihan",
+                        message="Mau buat akun role apa?",
+                        choices=[
+                            "1. Warga",
+                            "2. Admin",
+                            "3. Petugas",
+                            "4. Kembali",
+                        ],
+                    )
+                ]
+
+                jawaban = inquirer.prompt(pertanyaan)
+                pilihan = jawaban["pilihan"][0] if jawaban else "4"
+                if pilihan == "1":
+                    create_user()
+                elif pilihan == "2":
+                    create_user("admin")
+                elif pilihan == "3":
+                    create_user("petugas")
+                elif pilihan == "4":
+                    break
+                else:
+                    clear()
+
         elif pilihan == "2":
             read_user()
         elif pilihan == "3":

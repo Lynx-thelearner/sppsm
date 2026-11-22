@@ -113,10 +113,9 @@ def init_db():
             initial_users,
         )
 
-    
-# Seeding table requests
+    # Seeding table requests
     cursor.execute("SELECT COUNT(*) FROM requests")
-    
+
     if cursor.fetchone()[0] == 0:
         cursor.execute("""
             SELECT user_id, alamat
@@ -130,12 +129,12 @@ def init_db():
                 user_id ASC
             LIMIT 3
         """)
-    
+
         user_warga = cursor.fetchall()
-    
+
         if user_warga:
             initial_requests = []
-    
+
             data_requests = [
                 (
                     "2026-11-20 08:30:00",
@@ -166,21 +165,24 @@ def init_db():
                     "Lokasi tidak dapat diakses kendaraan",
                 ),
             ]
-    
+
             for i, request in enumerate(data_requests):
                 user = user_warga[i % len(user_warga)]
-    
-                initial_requests.append((
-                    user["user_id"],
-                    request[0],
-                    request[1],
-                    request[2],
-                    user["alamat"],
-                    request[3],
-                    request[4],
-                ))
-    
-            cursor.executemany("""
+
+                initial_requests.append(
+                    (
+                        user["user_id"],
+                        request[0],
+                        request[1],
+                        request[2],
+                        user["alamat"],
+                        request[3],
+                        request[4],
+                    )
+                )
+
+            cursor.executemany(
+                """
                 INSERT INTO requests (
                     user_id,
                     tanggal_pengajuan,
@@ -191,7 +193,9 @@ def init_db():
                     catatan
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, initial_requests)
+            """,
+                initial_requests,
+            )
 
     conn.commit()
     conn.close()

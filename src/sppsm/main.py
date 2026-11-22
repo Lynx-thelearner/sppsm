@@ -1,7 +1,8 @@
 import sys
 
+from sppsm.warga import jalankan_menu_warga
+
 from .admin import run_admin
-from .warga import jalankan_menu_warga
 from .auth import auth_menu, login, register, session
 from .database import init_db
 from .petugas import jalankan_menu_petugas
@@ -22,7 +23,7 @@ def main() -> None:
             elif role == "petugas":
                 jalankan_menu_petugas()
             elif role == "warga":
-                pass
+                jalankan_menu_warga()
         else:
             pilihan = auth_menu()
             if pilihan == "1":
@@ -33,5 +34,6 @@ def main() -> None:
                 print("\nSistem keluar, byee")
                 enter()
                 sys.exit()
-                
+
+
 main()

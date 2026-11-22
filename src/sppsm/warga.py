@@ -48,18 +48,30 @@ def lihat_riwayat():
         enter()
         return
 
-    table = PrettyTable(["ID", "Tanggal Pengajuan", "Tanggal Penjemputan", "status", "Berat (kg)", "Catatan"])
+    table = PrettyTable(
+        [
+            "ID",
+            "Tanggal Pengajuan",
+            "Tanggal Penjemputan",
+            "status",
+            "Berat (kg)",
+            "Catatan",
+        ]
+    )
     for i in requests:
-        table.add_row([
-            i["request_id"],
-            i["tanggal_pengajuan"],
-            i["tanggal_penjemputan"] or "-",
-            i["status"],
-            i["berat_sampah"] or "-",
-            i["catatan"] or "-"
-        ])
+        table.add_row(
+            [
+                i["request_id"],
+                i["tanggal_pengajuan"],
+                i["tanggal_penjemputan"] or "-",
+                i["status"],
+                i["berat_sampah"] or "-",
+                i["catatan"] or "-",
+            ]
+        )
     print(table)
-    enter() 
+    enter()
+
 
 def buat_request():
     clear()
@@ -79,7 +91,7 @@ def buat_request():
                 return
             break
         else:
-            input("Pilihan hanya 'y' dan 't'") 
+            input("Pilihan hanya 'y' dan 't'")
 
     catatan = input("Input catatan, (Opsional)")
     tanggal_sekarang = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -87,18 +99,19 @@ def buat_request():
     with closing(get_connection()) as conn:
         try:
             conn.execute(
-                            """
+                """
                             INSERT INTO requests (user_id, tanggal_pengajuan, alamat, status, catatan)
                             VALUES (?, ?, ?, 'menunggu', ?)
                             """,
-                            (session["user_id"], tanggal_sekarang, alamat, catatan),
-                        )
+                (session["user_id"], tanggal_sekarang, alamat, catatan),
+            )
             conn.commit()
             print("\n[Sukses] Pengajuan penjemputan berhasil dibuat!")
         except sqlite3.Error as e:
             print(f"\n[Gagal] Terjadi kesalahan: {e}")
 
     enter()
+
 
 def batalkan_request():
     clear()
@@ -126,7 +139,10 @@ def batalkan_request():
         return
 
     choices = [
-        (f"[#{r['request_id']} Tanggal: {r['tanggal_pengajuan']} - {r['alamat']}:", r["request_id"])
+        (
+            f"[#{r['request_id']} Tanggal: {r['tanggal_pengajuan']} - {r['alamat']}:",
+            r["request_id"],
+        )
         for r in requests
     ]
     choices.append(("<< Kembali >> ", None))
@@ -135,7 +151,7 @@ def batalkan_request():
         inquirer.List(
             "request_id",
             message="Pilih pengajuan yang ingin dibatalkan:",
-            choices=choices
+            choices=choices,
         )
     ]
     jawaban = inquirer.prompt(pertanyaan)
@@ -146,11 +162,13 @@ def batalkan_request():
 
     try:
         with closing(get_connection()) as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 UPDATE requests
                 SET status = 'dibatalkan'
                 WHERE request_id = ? AND user_id = ?
-                """, (req_id, session["user_id"])
+                """,
+                (req_id, session["user_id"]),
             )
 
             conn.commit()
@@ -159,6 +177,7 @@ def batalkan_request():
     except sqlite3.Error as e:
         print("Ada kesalahan", e)
         enter()
+
 
 def jalankan_menu_warga():
     while True:
@@ -173,9 +192,6 @@ def jalankan_menu_warga():
             logout()
             break
 
-if __name__ == "__main__":
-   jalankan_menu_warga() 
-        
-            
 
-        
+if __name__ == "__main__":
+    jalankan_menu_warga()

@@ -25,36 +25,8 @@ def get_requests():
         conn.close()
 
 
-# Ini untuk menampilkan daftar user yang bisa dipilih sebagai pengaju
-def _tampilkan_daftar_user():
-    conn = get_connection()
-    try:
-        users = conn.execute(
-            "SELECT user_id, username, nama, alamat, role FROM users"
-        ).fetchall()
-    finally:
-        conn.close()
-
-    if not users:
-        return []
-
-    print("\n--- Daftar User Tersedia ---")
-    for u in users:
-        print(
-            f"ID: {u['user_id']} | Username: {u['username']} | Nama: {u['nama']} | Role: {u['role']}"
-        )
-    return users
-
-
-# Tampilkan Requests (Read)
-def read_requests():
-    clear()
-    data = get_requests()
-    if not data:
-        print("\nBelum ada data request penjemputan sampah di database.")
-        input("\nTekan Enter untuk kembali ke menu...")
-        return
-
+# Helper untuk mencetak tabel PrettyTable daftar requests (dipakai di Read, Update, Delete)
+def _tampilkan_tabel_requests(data):
     tabel = PrettyTable()
     tabel.field_names = [
         "ID",
@@ -97,8 +69,57 @@ def read_requests():
             ]
         )
 
-    print("\n=== DAFTAR REQUEST PENJEMPUTAN SAMPAH ===")
     print(tabel)
+
+
+# Ini untuk menampilkan daftar user yang bisa dipilih sebagai pengaju
+def _tampilkan_daftar_user():
+    conn = get_connection()
+    try:
+        users = conn.execute(
+            "SELECT user_id, username, nama, alamat, role FROM users"
+        ).fetchall()
+    finally:
+        conn.close()
+
+    if not users:
+        return []
+
+    tabel = PrettyTable()
+    tabel.field_names = ["ID", "Username", "Nama", "Alamat", "Role"]
+    tabel.align["Username"] = "l"
+    tabel.align["Nama"] = "l"
+    tabel.align["Alamat"] = "l"
+    tabel.align["Role"] = "l"
+    tabel._max_width = {"Alamat": 30}
+
+    for u in users:
+        tabel.add_row(
+            [
+                u["user_id"],
+                u["username"],
+                u["nama"],
+                u["alamat"],
+                u["role"],
+            ]
+        )
+
+    print("\n--- Daftar User Tersedia ---")
+    print(tabel)
+    return users
+
+
+# Tampilkan Requests (Read)
+def read_requests():
+    clear()
+    data = get_requests()
+    if not data:
+        print("\nBelum ada data request penjemputan sampah di database.")
+        input("\nTekan Enter untuk kembali ke menu...")
+        return
+
+    print("\n=== DAFTAR REQUEST PENJEMPUTAN SAMPAH ===")
+    _tampilkan_tabel_requests(data)
     input("\nTekan Enter untuk kembali ke menu...")
 
 
@@ -172,16 +193,8 @@ def create_request():
     ).strip()
     alamat = alamat_input if alamat_input else user_target["alamat"]
 
-    # Status request
-    pertanyaan_status = [
-        inquirer.List(
-            "status",
-            message="Pilih status awal request:",
-            choices=["menunggu", "selesai", "ditolak", "dibatalkan"],
-        )
-    ]
-    jawaban_status = inquirer.prompt(pertanyaan_status)
-    status = jawaban_status["status"] if jawaban_status else "menunggu"
+    # Status request (otomatis menunggu)
+    status = "menunggu"
 
     # Catatan (opsional)
     catatan = input("Catatan tambahan (Opsional, Enter jika kosong): ").strip()
@@ -228,11 +241,7 @@ def update_request():
         input("\nTekan Enter untuk kembali ke menu...")
         return
 
-    for r in data:
-        nama_user = r["username"] or f"ID:{r['user_id']}"
-        print(
-            f"ID: {r['request_id']} | Pengaju: {nama_user} | Tgl: {r['tanggal_pengajuan']} | Status: {r['status']}"
-        )
+    _tampilkan_tabel_requests(data)
 
     while True:
         try:
@@ -488,11 +497,7 @@ def delete_request():
         input("\nTekan Enter untuk kembali ke menu...")
         return
 
-    for r in data:
-        nama_user = r["username"] or f"ID:{r['user_id']}"
-        print(
-            f"ID: {r['request_id']} | Pengaju: {nama_user} | Tgl: {r['tanggal_pengajuan']} | Status: {r['status']}"
-        )
+    _tampilkan_tabel_requests(data)
 
     while True:
         try:

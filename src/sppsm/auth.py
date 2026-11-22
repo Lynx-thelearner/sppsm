@@ -4,7 +4,7 @@ import inquirer
 import pwinput
 
 from .database import get_connection
-from .utils import clear, hash_password, verify_password, enter
+from .utils import clear, enter, hash_password, verify_password, enter
 
 # Session buat nyimpen data user yang lagi login
 session = {
@@ -73,6 +73,7 @@ def register():
     cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
     if cursor.fetchone():
         print("\nUsername sudah dipakai, cari yang lain.")
+        enter()
         conn.close()
         return False
 
@@ -81,6 +82,7 @@ def register():
 
     if password != confirm_password:
         print("\nPassword tidak cocok.")
+        enter()
         conn.close()
         return False
 
@@ -100,9 +102,11 @@ def register():
         )
         conn.commit()
         print("\nRegistrasi Berhasil! Silakan login.")
+        enter()
         return True
     except sqlite3.Error as e:
         print(f"\nGagal daftar: {e}")
+        enter()
         return False
     finally:
         conn.close()

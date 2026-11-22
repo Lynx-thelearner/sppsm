@@ -3,6 +3,7 @@ import inquirer
 from .auth import logout
 from .users import menu_crud_user
 from .utils import clear, enter
+from .requests import menu_crud_requests
 
 
 def menu_admin():
@@ -29,6 +30,9 @@ def run_admin():
     if jawaban == "1":
         menu_crud_user()
     elif jawaban == "2":
-        enter()
+        menu_crud_requests()
     elif jawaban == "3":
         logout()
+
+if __name__ == "__main__":
+    run_admin()

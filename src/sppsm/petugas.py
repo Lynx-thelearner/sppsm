@@ -1,12 +1,14 @@
 import math
+import sqlite3
 from contextlib import closing
+from datetime import datetime
 
 import inquirer
 from prettytable import PrettyTable
 
 from .auth import logout
 from .database import get_connection
-from .utils import clear
+from .utils import clear, enter
 
 
 def menu_petugas():
@@ -44,6 +46,7 @@ def get_menunggu_request():
             FROM requests r
             JOIN users u ON r.user_id = u.user_id
             WHERE r.status = 'menunggu'
+            ORDER BY r.tanggal_pengajuan ASC
                         """)
         data = cursor.fetchall()
 
@@ -75,7 +78,7 @@ def edit_requests_petugas():
     data = get_menunggu_request()
     if not data:
         print("Tidak ada data yang bisa diubah.")
-        input("\n Tekan untuk melanjutkan")
+        enter()
         return
 
     choices_request = [
@@ -86,7 +89,7 @@ def edit_requests_petugas():
         for row in data
     ]
 
-    choices_request.append(("<< Batal >>", None))
+    choices_request.append(("<< Kembali >>", None))
 
     pertanyaan_pilih = [
         inquirer.List(
@@ -99,7 +102,7 @@ def edit_requests_petugas():
 
     if not jawaban_pilih or jawaban_pilih["request_id"] is None:
         print("Dibatalkan")
-        input("\nTekan untuk melanjutkan.")
+        enter()
         return
 
     req_id = jawaban_pilih["request_id"]
@@ -108,17 +111,21 @@ def edit_requests_petugas():
         inquirer.List(
             "status",
             message=f"Pilih status baru untuk request #{req_id}",
-            choices=["selesai", "ditolak", "Batalkan"],
+            choices=[
+                ("Selesai", "selesai"),
+                ("Ditolak", "ditolak"),
+                ("Kembali", "kembali"),
+            ],
         )
     ]
     jawaban_status = inquirer.prompt(pertanyaan_status)
-    status_baru = jawaban_status["status"] if jawaban_status else "Batalkan"
+    status_baru = jawaban_status["status"] if jawaban_status else "kembali"
 
-    if status_baru == "Batalkan":
-        print("Proses dibatalkan.")
+    if status_baru == "kembali":
         input("Tekan Enter untuk kembali...")
         return
-
+    
+    tanggal_jemput = None    
     berat = None
     catatan = None
 
@@ -129,13 +136,18 @@ def edit_requests_petugas():
                     input("Masukkan berat sampah (kg): ").strip().replace(",", ".")
                 )
                 berat = float(berat_input)
-                if not math.isfinite(berat) or berat <= 0:
-                    print("Berat sampah harus diatas 0")
+                if not math.isfinite(berat) or not (0 < berat <= 200):
+                    print("Berat sampah harus diatas 0 hingga 200")
                     continue
                 break
             except ValueError:
                 print("Input tidak valid, harap masukkan angka.")
-        catatan = "Sampah telah dijemput dan ditimbang"
+                
+        catatan = input("Masukkan catatan dari penjemputan (kosongkan untuk default): ").strip()
+        if not catatan:
+            catatan = "Sampah telah dijemput dan ditimbang"
+            
+        tanggal_jemput = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     elif status_baru == "ditolak":
         while True:
@@ -144,29 +156,38 @@ def edit_requests_petugas():
                 print("Input tidak boleh kosong")
                 continue
             break
+            
+    try:
+        with closing(get_connection()) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE requests
+                SET status = ?, berat_sampah = ?, catatan = ?, tanggal_penjemputan = ?
+                WHERE request_id = ? AND status = 'menunggu'
+                """,
+                (status_baru, berat, catatan, tanggal_jemput, req_id),
+            )
+    
+            if cursor.rowcount == 0:
+                print("Request tidak ditemukan atau sudah diproses")
+                enter()
+                return
+    
+            conn.commit()
+    
+            print(f"\n[SUKSES] request #{req_id} berhasil diupdate menjadi '{status_baru}'")
+            if berat is not None:
+                print(f"Total berat: {berat} kg")
+            enter()
+        
+    except sqlite3.Error as e:
+        print(f"Terjadi kesalahan pada database: {e}")
+        enter()
+        return
+    
 
-    with closing(get_connection()) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            UPDATE requests
-            SET status = ?, berat_sampah = ?, catatan = ?
-            WHERE request_id = ? AND status = 'menunggu'
-            """,
-            (status_baru, berat, catatan, req_id),
-        )
-
-        if cursor.rowcount == 0:
-            print("Request tidak ditemukan atau sudah diproses")
-            input("\nTekan Enter untuk kembali...")
-            return
-
-        conn.commit()
-
-    print(f"\n[SUKSES] request #{req_id} berhasil diupdate menjadi '{status_baru}'")
-    if berat is not None:
-        print(f"Total berat: {berat} kg")
-    input("\nTekan Enter untuk kembali menu...")
+    
 
 
 def jalankan_menu_petugas():

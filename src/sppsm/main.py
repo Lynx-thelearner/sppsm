@@ -1,11 +1,11 @@
 import sys
 
 from .admin import run_admin
+from .warga import jalankan_menu_warga
 from .auth import auth_menu, login, register, session
 from .database import init_db
 from .petugas import jalankan_menu_petugas
-from .users import menu_crud_user
-from .utils import clear
+from .utils import clear, enter
 
 
 def main() -> None:
@@ -30,4 +30,8 @@ def main() -> None:
             elif pilihan == "2":
                 register()
             elif pilihan == "3":
+                print("\nSistem keluar, byee")
+                enter()
                 sys.exit()
+                
+main()

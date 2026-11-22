@@ -43,7 +43,7 @@ def init_db():
                 request_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
                 tanggal_pengajuan TEXT NOT NULL,
-                jadwal_penjemputan TEXT,
+                tanggal_penjemputan TEXT,
                 berat_sampah REAL CHECK ( berat_sampah >= 0),
                 alamat TEXT NOT NULL,
                 status TEXT NOT NULL DEFAULT 'menunggu'
@@ -91,37 +91,107 @@ def init_db():
                 "083855754782",
                 "warga",
             ),
+            (
+                "lynxstilllearning",
+                hash_password("lynxlynxy"),
+                "Lynx",
+                "Blok CX",
+                "081235754782",
+                "warga",
+            ),
+            (
+                "kikirakira",
+                hash_password("kiki123"),
+                "Kiki",
+                "Blok B",
+                "083985754782",
+                "warga",
+            ),
         ]
         cursor.executemany(
             "INSERT INTO users (username, password, nama, alamat, no_telepon, role) VALUES (?, ?, ?, ?, ?, ?)",
             initial_users,
         )
 
-    # seeding table requests
+    
+# Seeding table requests
     cursor.execute("SELECT COUNT(*) FROM requests")
+    
     if cursor.fetchone()[0] == 0:
-        cursor.execute(
-            "SELECT user_id, alamat FROM users WHERE username = ?",
-            ("BennyAdventureTeam",),
-        )
-        user = cursor.fetchone()
-
-        if user:
-            cursor.execute(
-                """
-                INSERT INTO requests (user_id, tanggal_pengajuan, jadwal_penjemputan, berat_sampah, alamat, status, catatan)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
+        cursor.execute("""
+            SELECT user_id, alamat
+            FROM users
+            WHERE role = 'warga'
+            ORDER BY
+                CASE
+                    WHEN username = 'BennyAdventureTeam' THEN 0
+                    ELSE 1
+                END,
+                user_id ASC
+            LIMIT 3
+        """)
+    
+        user_warga = cursor.fetchall()
+    
+        if user_warga:
+            initial_requests = []
+    
+            data_requests = [
                 (
-                    user["user_id"],
-                    "2026-11-06 22:53:13",
-                    "2026-11-06 23:10:15",
-                    5.0,
-                    user["alamat"],
-                    "selesai",
-                    "",
+                    "2026-11-20 08:30:00",
+                    None,
+                    None,
+                    "menunggu",
+                    "Sampah daun dan ranting di depan pagar",
                 ),
-            )
+                (
+                    "2026-11-21 09:15:00",
+                    None,
+                    None,
+                    "menunggu",
+                    "Sampah kardus dan plastik",
+                ),
+                (
+                    "2026-11-18 10:00:00",
+                    "2026-11-18 11:30:00",
+                    6.5,
+                    "selesai",
+                    "Sampah telah dijemput dan ditimbang",
+                ),
+                (
+                    "2026-11-17 14:00:00",
+                    None,
+                    None,
+                    "ditolak",
+                    "Lokasi tidak dapat diakses kendaraan",
+                ),
+            ]
+    
+            for i, request in enumerate(data_requests):
+                user = user_warga[i % len(user_warga)]
+    
+                initial_requests.append((
+                    user["user_id"],
+                    request[0],
+                    request[1],
+                    request[2],
+                    user["alamat"],
+                    request[3],
+                    request[4],
+                ))
+    
+            cursor.executemany("""
+                INSERT INTO requests (
+                    user_id,
+                    tanggal_pengajuan,
+                    tanggal_penjemputan,
+                    berat_sampah,
+                    alamat,
+                    status,
+                    catatan
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, initial_requests)
 
     conn.commit()
     conn.close()

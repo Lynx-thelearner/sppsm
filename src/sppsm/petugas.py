@@ -124,8 +124,8 @@ def edit_requests_petugas():
     if status_baru == "kembali":
         input("Tekan Enter untuk kembali...")
         return
-    
-    tanggal_jemput = None    
+
+    tanggal_jemput = None
     berat = None
     catatan = None
 
@@ -142,11 +142,13 @@ def edit_requests_petugas():
                 break
             except ValueError:
                 print("Input tidak valid, harap masukkan angka.")
-                
-        catatan = input("Masukkan catatan dari penjemputan (kosongkan untuk default): ").strip()
+
+        catatan = input(
+            "Masukkan catatan dari penjemputan (kosongkan untuk default): "
+        ).strip()
         if not catatan:
             catatan = "Sampah telah dijemput dan ditimbang"
-            
+
         tanggal_jemput = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     elif status_baru == "ditolak":
@@ -156,7 +158,7 @@ def edit_requests_petugas():
                 print("Input tidak boleh kosong")
                 continue
             break
-            
+
     try:
         with closing(get_connection()) as conn:
             cursor = conn.cursor()
@@ -168,26 +170,25 @@ def edit_requests_petugas():
                 """,
                 (status_baru, berat, catatan, tanggal_jemput, req_id),
             )
-    
+
             if cursor.rowcount == 0:
                 print("Request tidak ditemukan atau sudah diproses")
                 enter()
                 return
-    
+
             conn.commit()
-    
-            print(f"\n[SUKSES] request #{req_id} berhasil diupdate menjadi '{status_baru}'")
+
+            print(
+                f"\n[SUKSES] request #{req_id} berhasil diupdate menjadi '{status_baru}'"
+            )
             if berat is not None:
                 print(f"Total berat: {berat} kg")
             enter()
-        
+
     except sqlite3.Error as e:
         print(f"Terjadi kesalahan pada database: {e}")
         enter()
         return
-    
-
-    
 
 
 def jalankan_menu_petugas():

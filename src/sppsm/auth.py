@@ -4,7 +4,7 @@ import inquirer
 import pwinput
 
 from .database import get_connection
-from .utils import clear, enter, hash_password, verify_password, enter
+from .utils import clear, enter, hash_password, verify_password
 
 # Session buat nyimpen data user yang lagi login
 session = {

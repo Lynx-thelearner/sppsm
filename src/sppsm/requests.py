@@ -140,7 +140,11 @@ def create_request():
     # Pilih user_id pengaju
     while True:
         try:
-            user_id = int(input("\nMasukkan user_id pengaju (0 untuk batal): ").strip())
+            user_id = int(
+                input(
+                    "\nMasukkan user_id pengaju (Tekan 0 untuk kembali ke menu): "
+                ).strip()
+            )
             if user_id == 0:
                 return
             if user_id < 0 or user_id > 9223372036854775807:
@@ -573,7 +577,7 @@ def menu_crud_requests():
                     "2. Read requests",
                     "3. Update request",
                     "4. Delete request",
-                    "5. Kembali / Keluar",
+                    "5. Kembali",
                 ],
             )
         ]

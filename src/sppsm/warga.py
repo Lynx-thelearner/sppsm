@@ -80,11 +80,11 @@ def buat_request():
     print(f"Alamat default {alamat_default}")
 
     while True:
-        default = input("Gunakan alamat default?: [y/t]").strip().lower()
+        default = input("Gunakan alamat default? [y/n]: ").strip().lower()
         if default == "y":
             alamat = alamat_default
             break
-        elif default == "t":
+        elif default == "n":
             alamat = input("Masukkan alamat jemput lain: ").strip()
             if not alamat:
                 print("Alamat tidak boleh kosong")

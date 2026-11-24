@@ -19,22 +19,41 @@ session = {
 
 
 def login():
-    print("\n" + "=" * 40)
-    print("            MENU LOGIN SPPSM            ")
-    print("=" * 40)
+    
+    kesempatan = 3
+    
+    while kesempatan > 0:
+        clear()
 
-    username = input("Username : ").strip()
-    password = pwinput.pwinput(prompt="Password : ", mask="*").strip()
+        print("\n" + "=" * 40)
+        print("            MENU LOGIN SPPSM            ")
+        print("=" * 40)
+        print(f"Sisa kesempatan login: {kesempatan}")
 
-    conn = get_connection()
-    cursor = conn.cursor()
+        
+        username = input("Username (input '0' untuk membatalkan) : ").strip()
+        if not username:
+            print("Input username tidak boleh kosong.")
+            enter()
+            continue
 
-    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-    user = cursor.fetchone()
+        elif username == "0":
+            return False
+        
+        while True:    
+            password = pwinput.pwinput(prompt="Password : ", mask="*")
+            if not password:
+                print("Input password tidak boleh kosong.")
+                enter()
+                continue
+            break
 
-    if user:
-        # PAKAI VERIFY_PASSWORD DARI UTILS
-        if verify_password(password, user["password"]):
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+        user = cursor.fetchone()
+    
+        if user and verify_password(password, user["password"]):
             session["user_id"] = user["user_id"]
             session["username"] = user["username"]
             session["nama"] = user["nama"]
@@ -48,51 +67,158 @@ def login():
             enter()
             conn.close()
             return True
+        
+        conn.close()    
+        kesempatan -= 1
+            
+        if not user:
+            print("\nUsername tidak ditemukan!")
         else:
-            print("\nPassword salah.")
-            enter()
-    else:
-        print("\nUsername tidak ditemukan, silakan daftar dulu.")
-        enter()
+            print("\nPassword salah!")
 
-    conn.close()
+        if kesempatan > 0:
+            print(f"Sisa percobaan Anda tinggal {kesempatan} kali lagi.")
+            enter()
+        else:
+            print("\nKesempatan login telah habis (3x salah). Akses kembali ke menu utama.")
+            enter()
+            return False
+            
     return False
 
 
 def register():
-    print("\n" + "=" * 40)
-    print("        REGISTRASI WARGA BARU SPPSM       ")
-    print("=" * 40)
+    while True:
+        clear()
+        
+        print("\n" + "=" * 40)
+        print("        REGISTRASI WARGA BARU SPPSM       ")
+        print("=" * 40)
+        print("Ketik '0' pada username untuk kembali ke menu\n")
+    
+        username = input("Masukkan username anda (min 3 karakter, maks 20 karakter): ").strip()
 
-    username = input("Username Baru : ").strip()
+        if not username:
+            print("Username tidak boleh kosong! Coba lagi.")
+            enter()
+            continue
 
-    conn = get_connection()
-    cursor = conn.cursor()
+        if username == "0":
+            return
 
-    # Cek username udah dipake apa belum
-    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-    if cursor.fetchone():
-        print("\nUsername sudah dipakai, cari yang lain.")
-        enter()
+        if not (2 < len(username) <= 20):
+            print("Username tidak boleh lebih kecil dari 3 karakter atau lebih besar dari 20 karakter! Coba lagi.")
+            enter()
+            continue
+
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # Cek username udah dipake apa belum
+        cek = cursor.execute(
+            "SELECT 1 FROM users WHERE username = ?", (username,)
+        ).fetchone()
         conn.close()
-        return False
 
-    password = pwinput.pwinput(prompt="Password Baru : ", mask="*")
-    confirm_password = pwinput.pwinput(prompt="Konfirmasi Password : ", mask="*")
+        if cek:
+            print("\nUsername sudah dipakai, cari yang lain.")
+            enter()
+        else:
+            break
 
-    if password != confirm_password:
-        print("\nPassword tidak cocok.")
-        enter()
-        conn.close()
-        return False
+    while True:
+        clear()
+        password = pwinput.pwinput(prompt="Password Baru : ", mask="*")
+        confirm_password = pwinput.pwinput(prompt="Konfirmasi Password : ", mask="*")
+
+        if not password.strip():
+            print("Password tidak boleh kosong! Coba lagi.")
+            enter()
+            continue
+
+        elif len(password) < 6 or len(password) > 64:
+            print("Password tidak boleh lebih kecil dari 6 karakter atau lebih besar dari 64 karakter! Coba lagi.")
+            enter()
+            continue
+
+        elif not confirm_password.strip():
+            print("Password konfirmasi tidak boleh kosong! Coba lagi.")
+            enter()
+            continue
+
+        elif password != confirm_password:
+            print("Password tidak cocok! Silakan ulangi dari awal.\n")
+            enter()
+            continue
+
+        else:
+            break
 
     print("\n--- Isi Data Diri ---")
-    nama = input("Nama Lengkap    : ").strip()
-    alamat = input("Alamat (Blok/No): ").strip()
-    no_telepon = input("No. Telepon     : ").strip()
+
+    while True:
+        nama = input("Masukkan nama anda (min 3 karakter, maks 100 karakter): ").strip()
+
+        if not nama:
+            print("Nama tidak boleh kosong! Coba lagi.")
+            enter()
+            continue
+
+        elif not (3 <= len(nama) <= 100):
+            print(
+                "Nama tidak boleh lebih kecil dari 3 karakter atau lebih besar dari 100 karakter! Coba lagi."
+            )
+            enter()
+            continue
+        else:
+            break
+
+    while True:
+        clear()
+        alamat = input(
+            "Masukkan alamat anda (min 5 karakter, maks 200 karakter): "
+        ).strip()
+        if not alamat:
+            print("Alamat tidak boleh kosong.")
+            enter()
+            continue
+
+        elif not (5 <= len(alamat) <= 200):
+            print(
+                "Alamat tidak boleh kurang dari 5 karakter atau lebih dari 200 karakter! Coba lagi."
+            )
+            enter()
+
+        else:
+            break
+
+    while True:
+        clear()
+        no_telepon = input(
+            "Masukkan nomor telepon anda (Opsional, maks 20 karakter, tekan Enter jika kosong): "
+        ).strip()
+
+        if not no_telepon:
+            no_telepon = None
+            break
+
+        elif not (10 <= len(no_telepon) <= 20):
+            print("Nomor telepon harus 10 hingga 20 karakter.")
+            enter()
+            continue
+
+        elif not no_telepon.isdigit():
+            print("Nomor telepon hanya boleh berisi angka.")
+            enter()
+            continue
+
+        else:
+            break
 
     try:
         # Masukin data ke database
+        conn = get_connection()
+        cursor = conn.cursor()
         cursor.execute(
             """
             INSERT INTO users (username, password, nama, alamat, no_telepon, role) 

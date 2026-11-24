@@ -58,7 +58,7 @@ def read_user():
 def create_user(role="warga"):
     clear()
     print("\n=== REGISTRASI AKUN BARU ===")
-    print("(Ketik '0' pada username untuk kembali ke menu)\n")
+    print("Ketik '0' pada username untuk kembali ke menu\n")
 
     if role not in ("warga", "petugas", "admin"):
         print(f"Role '{role}' tidak valid!")
@@ -67,6 +67,7 @@ def create_user(role="warga"):
 
     # Input & validasi username
     while True:
+        clear()
         username = input(
             "Masukkan username anda (min 3 karakter, maks 20 karakter): "
         ).strip()
@@ -94,13 +95,14 @@ def create_user(role="warga"):
 
     # Input & konfirmasi password (pakai masking "*")
     while True:
+        clear()
         password = pwinput.pwinput(prompt="Masukkan password anda: ", mask="*")
         if not password.strip():
             print("Password tidak boleh kosong! Coba lagi.")
             continue
-        if len(password) > 20 or len(password) < 6:
+        if len(password) > 64 or len(password) < 6:
             print(
-                "Password tidak boleh lebih kecil dari 6 karakter atau lebih besar dari 20 karakter! Coba lagi."
+                "Password tidak boleh lebih kecil dari 6 karakter atau lebih besar dari 64 karakter! Coba lagi."
             )
             continue
 
@@ -110,11 +112,13 @@ def create_user(role="warga"):
 
         if password != konfirmasi_password:
             print("Password tidak cocok! Silakan ulangi dari awal.\n")
+            continue
         else:
             break
 
     # Input nama
     while True:
+        clear()
         nama = input("Masukkan nama anda (min 3 karakter, maks 100 karakter): ").strip()
         if not nama:
             print("Nama tidak boleh kosong! Coba lagi.")
@@ -128,6 +132,7 @@ def create_user(role="warga"):
 
     # Input alamat
     while True:
+        clear()
         alamat = input(
             "Masukkan alamat anda (min 5 karakter, maks 200 karakter): "
         ).strip()
@@ -143,11 +148,12 @@ def create_user(role="warga"):
 
     # Input nomor telepon (opsional)
     while True:
+        clear()
         no_telepon = input(
             "Masukkan nomor telepon anda (Opsional, maks 20 karakter, tekan Enter jika kosong): "
         ).strip()
-        if len(no_telepon) > 20:
-            print("Nomor telepon tidak boleh lebih dari 20 karakter! Coba lagi.")
+        if len(no_telepon) > 20 or len(no_telepon) < 10:
+            print("Nomor telepon harus 10 hingga 20 karakter! Coba lagi.")
             continue
         no_telepon = no_telepon if no_telepon else None
         break
@@ -332,7 +338,11 @@ def update_user():
             .strip()
             .lower()
         )
-        if lanjut != "y":
+
+        
+        if lanjut == "y":
+            pass
+        elif lanjut == "n":
             break
 
     # Cek apakah ada data yang berubah sebelum menulis ke database

@@ -98,9 +98,9 @@ def create_user(role="warga"):
         if not password.strip():
             print("Password tidak boleh kosong! Coba lagi.")
             continue
-        if len(password) > 20 or len(password) < 6:
+        if len(password) > 64 or len(password) < 6:
             print(
-                "Password tidak boleh lebih kecil dari 6 karakter atau lebih besar dari 20 karakter! Coba lagi."
+                "Password tidak boleh lebih kecil dari 6 karakter atau lebih besar dari 64 karakter! Coba lagi."
             )
             continue
 

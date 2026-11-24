@@ -35,7 +35,7 @@ def read_user():
     tabel.align["Nama"] = "l"
     tabel.align["Alamat"] = "l"
     tabel.align["Role"] = "l"
-    tabel._max_width = {"Alamat": 30}
+    tabel._max_width = {"Nama": 25, "Alamat": 30}
 
     for u in users:
         tabel.add_row(
@@ -67,14 +67,18 @@ def create_user(role="warga"):
 
     # Input & validasi username
     while True:
-        username = input("Masukkan username anda (maks 20 karakter): ").strip()
+        username = input(
+            "Masukkan username anda (min 3 karakter, maks 20 karakter): "
+        ).strip()
         if username == "0":
             return
         if not username:
             print("Username tidak boleh kosong! Coba lagi.")
             continue
-        if len(username) > 20:
-            print("Username tidak boleh lebih dari 20 karakter! Coba lagi.")
+        if len(username) > 20 or len(username) < 3:
+            print(
+                "Username tidak boleh lebih kecil dari 3 karakter atau lebih besar dari 20 karakter! Coba lagi."
+            )
             continue
 
         conn = get_connection()
@@ -90,14 +94,19 @@ def create_user(role="warga"):
 
     # Input & konfirmasi password (pakai masking "*")
     while True:
-        password = pwinput.pwinput(prompt="Masukkan password anda: ", mask="*").strip()
-        if not password:
+        password = pwinput.pwinput(prompt="Masukkan password anda: ", mask="*")
+        if not password.strip():
             print("Password tidak boleh kosong! Coba lagi.")
+            continue
+        if len(password) > 20 or len(password) < 6:
+            print(
+                "Password tidak boleh lebih kecil dari 6 karakter atau lebih besar dari 20 karakter! Coba lagi."
+            )
             continue
 
         konfirmasi_password = pwinput.pwinput(
             prompt="Konfirmasi password anda: ", mask="*"
-        ).strip()
+        )
 
         if password != konfirmasi_password:
             print("Password tidak cocok! Silakan ulangi dari awal.\n")
@@ -106,22 +115,31 @@ def create_user(role="warga"):
 
     # Input nama
     while True:
-        nama = input("Masukkan nama anda (maks 20 karakter): ").strip()
+        nama = input("Masukkan nama anda (min 3 karakter, maks 100 karakter): ").strip()
         if not nama:
             print("Nama tidak boleh kosong! Coba lagi.")
             continue
-        if len(nama) > 20:
-            print("Nama tidak boleh lebih dari 20 karakter! Coba lagi.")
+        if len(nama) > 100 or len(nama) < 3:
+            print(
+                "Nama tidak boleh lebih kecil dari 3 karakter atau lebih besar dari 100 karakter! Coba lagi."
+            )
             continue
         break
 
     # Input alamat
     while True:
-        alamat = input("Masukkan alamat anda: ").strip()
+        alamat = input(
+            "Masukkan alamat anda (min 5 karakter, maks 200 karakter): "
+        ).strip()
         if not alamat:
             print("Alamat tidak boleh kosong! Coba lagi.")
-        else:
-            break
+            continue
+        if len(alamat) > 200 or len(alamat) < 5:
+            print(
+                "Alamat tidak boleh kurang dari 5 karakter atau lebih dari 200 karakter! Coba lagi."
+            )
+            continue
+        break
 
     # Input nomor telepon (opsional)
     while True:
@@ -230,12 +248,16 @@ def update_user():
 
         if pilihan == "1":
             while True:
-                input_nama = input("\nMasukkan nama baru (maks 20 karakter): ").strip()
+                input_nama = input(
+                    "\nMasukkan nama baru (min 3 karakter, maks 100 karakter): "
+                ).strip()
                 if not input_nama:
-                    print("Nama tidak boleh kosong!")
+                    print("Nama tidak boleh kosong! Coba lagi.")
                     continue
-                if len(input_nama) > 20:
-                    print("Nama tidak boleh lebih dari 20 karakter!")
+                if len(input_nama) > 100 or len(input_nama) < 3:
+                    print(
+                        "Nama tidak boleh lebih kecil dari 3 karakter atau lebih besar dari 100 karakter! Coba lagi."
+                    )
                     continue
                 nama_baru = input_nama
                 print("Nama berhasil diubah sementara.")
@@ -243,13 +265,20 @@ def update_user():
 
         elif pilihan == "2":
             while True:
-                input_alamat = input("\nMasukkan alamat baru: ").strip()
+                input_alamat = input(
+                    "\nMasukkan alamat baru (min 5 karakter, maks 200 karakter): "
+                ).strip()
                 if not input_alamat:
-                    print("Alamat tidak boleh kosong!")
-                else:
-                    alamat_baru = input_alamat
-                    print("Alamat berhasil diubah sementara.")
-                    break
+                    print("Alamat tidak boleh kosong! Coba lagi.")
+                    continue
+                if len(input_alamat) > 200 or len(input_alamat) < 5:
+                    print(
+                        "Alamat tidak boleh kurang dari 5 karakter atau lebih dari 200 karakter! Coba lagi."
+                    )
+                    continue
+                alamat_baru = input_alamat
+                print("Alamat berhasil diubah sementara.")
+                break
 
         elif pilihan == "3":
             while True:
@@ -257,7 +286,9 @@ def update_user():
                     "\nMasukkan nomor telepon baru (maks 20 karakter, Kosongkan/Enter untuk menghapus nomor): "
                 ).strip()
                 if len(input_telp) > 20:
-                    print("Nomor telepon tidak boleh lebih dari 20 karakter!")
+                    print(
+                        "Nomor telepon tidak boleh lebih dari 20 karakter! Coba lagi."
+                    )
                     continue
                 telp_baru = input_telp if input_telp else None
                 print("No. Telepon berhasil diubah sementara.")
@@ -266,15 +297,21 @@ def update_user():
         elif pilihan == "4":
             while True:
                 pass_input = pwinput.pwinput(
-                    prompt="\nMasukkan password baru: ", mask="*"
-                ).strip()
-                if not pass_input:
-                    print("Password tidak boleh kosong!")
+                    prompt="\nMasukkan password baru (min 6 karakter, maks 20 karakter): ",
+                    mask="*",
+                )
+                if not pass_input.strip():
+                    print("Password tidak boleh kosong! Coba lagi.")
+                    continue
+                if len(pass_input) > 20 or len(pass_input) < 6:
+                    print(
+                        "Password tidak boleh lebih kecil dari 6 karakter atau lebih besar dari 20 karakter! Coba lagi."
+                    )
                     continue
 
                 konfirmasi_pass = pwinput.pwinput(
                     prompt="Konfirmasi password baru: ", mask="*"
-                ).strip()
+                )
                 if pass_input != konfirmasi_pass:
                     print("Password tidak cocok! Silakan ulangi.\n")
                 else:
@@ -421,7 +458,7 @@ def menu_crud_user():
 
         if pilihan == "1":
             while True:
-                pertanyaan = [
+                role_pertanyaan = [
                     inquirer.List(
                         "pilihan",
                         message="Mau buat akun role apa?",
@@ -434,15 +471,15 @@ def menu_crud_user():
                     )
                 ]
 
-                jawaban = inquirer.prompt(pertanyaan)
-                pilihan = jawaban["pilihan"][0] if jawaban else "4"
-                if pilihan == "1":
+                role_jawaban = inquirer.prompt(role_pertanyaan)
+                role_pilihan = role_jawaban["pilihan"][0] if role_jawaban else "4"
+                if role_pilihan == "1":
                     create_user()
-                elif pilihan == "2":
+                elif role_pilihan == "2":
                     create_user("admin")
-                elif pilihan == "3":
+                elif role_pilihan == "3":
                     create_user("petugas")
-                elif pilihan == "4":
+                elif role_pilihan == "4":
                     break
                 else:
                     clear()

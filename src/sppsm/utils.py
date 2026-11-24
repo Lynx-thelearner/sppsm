@@ -2,17 +2,20 @@ import hashlib
 import os
 import secrets
 import sys
-import tty
-import termios
-import msvcrt
+
 
 def enter():
     print("\nTekan Enter untuk melanjutkan", end="", flush=True)
 
     if os.name == "nt":
+        import msvcrt
+
         while msvcrt.getch() != b"\r":
             pass
     else:
+        import termios
+        import tty
+
         fd = sys.stdin.fileno()
         old_setting = termios.tcgetattr(fd)
 
@@ -23,6 +26,7 @@ def enter():
                 pass
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_setting)
+
 
 def clear():
     os.system("cls" if os.name == "nt" else "clear")

@@ -47,27 +47,27 @@ def get_menunggu_request():
             JOIN users u ON r.user_id = u.user_id
             WHERE r.status = 'menunggu'
             ORDER BY r.tanggal_pengajuan ASC
-                        """)
+            """)
         data = cursor.fetchall()
 
     if not data:
         print("Belum ada request penjemputan yang menunggu.")
         return []
-    else:
-        table = PrettyTable(
-            ["ID", "Nama Warga", "No. HP", "Alamat", "Tgl Pengajuan", "Status"]
+
+    table = PrettyTable(
+        ["ID", "Nama Warga", "No. HP", "Alamat", "Tgl Pengajuan", "Status"]
+    )
+    for row in data:
+        table.add_row(
+            [
+                row["request_id"],
+                row["nama_warga"],
+                row["no_telepon"] or "-",
+                row["alamat"],
+                row["tanggal_pengajuan"],
+                row["status"],
+            ]
         )
-        for row in data:
-            table.add_row(
-                [
-                    row["request_id"],
-                    row["nama_warga"],
-                    row["no_telepon"] or "-",
-                    row["alamat"],
-                    row["tanggal_pengajuan"],
-                    row["status"],
-                ]
-            )
     print(table)
     return data
 
@@ -122,7 +122,7 @@ def edit_requests_petugas():
     status_baru = jawaban_status["status"] if jawaban_status else "kembali"
 
     if status_baru == "kembali":
-        input("Tekan Enter untuk kembali...")
+        enter()
         return
 
     tanggal_jemput = None
@@ -133,29 +133,40 @@ def edit_requests_petugas():
         while True:
             try:
                 berat_input = (
-                    input("Masukkan berat sampah (kg): ").strip().replace(",", ".")
+                    input("Masukkan berat sampah (kg, maks 250): ")
+                    .strip()
+                    .replace(",", ".")
                 )
                 berat = float(berat_input)
-                if not math.isfinite(berat) or not (0 < berat <= 200):
-                    print("Berat sampah harus diatas 0 hingga 200")
+                if not math.isfinite(berat) or not (0 < berat <= 250):
+                    print("Berat sampah harus di atas 0 hingga 250 kg.")
                     continue
+                berat = round(berat, 2)
                 break
             except ValueError:
                 print("Input tidak valid, harap masukkan angka.")
 
-        catatan = input(
-            "Masukkan catatan dari penjemputan (kosongkan untuk default): "
-        ).strip()
-        if not catatan:
-            catatan = "Sampah telah dijemput dan ditimbang"
+        while True:
+            catatan = input(
+                "Masukkan catatan dari penjemputan (maks 250 karakter, kosongkan untuk default): "
+            ).strip()
+            if len(catatan) > 250:
+                print("Catatan maksimal 250 karakter. Silakan ulangi.")
+                continue
+            if not catatan:
+                catatan = "Sampah telah dijemput dan ditimbang"
+            break
 
         tanggal_jemput = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     elif status_baru == "ditolak":
         while True:
-            catatan = input("Masukkan alasan penolakan: ").strip()
+            catatan = input("Masukkan alasan penolakan (maks 250 karakter): ").strip()
             if not catatan:
-                print("Input tidak boleh kosong")
+                print("Input tidak boleh kosong.")
+                continue
+            if len(catatan) > 250:
+                print("Alasan penolakan maksimal 250 karakter. Silakan ulangi.")
                 continue
             break
 
@@ -196,7 +207,7 @@ def jalankan_menu_petugas():
         pilihan = menu_petugas()
         if pilihan == "1":
             get_menunggu_request()
-            input("\nTekan Enter untuk kembali...")
+            enter()
         elif pilihan == "2":
             edit_requests_petugas()
         elif pilihan == "3":

@@ -221,7 +221,9 @@ def create_request():
         except ValueError:
             pesan_error = "Berat sampah harus berupa angka (>0-250 kg, contoh: 2.5)!"
 
-    # Alamat penjemputan (default ambil dari alamat user)
+    # Alamat penjemputan (opsi pakai alamat default user dengan [y/n])
+    alamat_default = (user_target["alamat"] or "").strip()
+    punya_default_valid = bool(alamat_default and (5 <= len(alamat_default) <= 200))
     pesan_error = ""
     while True:
         clear()
@@ -231,13 +233,29 @@ def create_request():
             print(f"[!] {pesan_error}\n")
             pesan_error = ""
 
+        if punya_default_valid:
+            pakai_default = (
+                input(f"Gunakan alamat default '{alamat_default}'? [y/n]: ")
+                .strip()
+                .lower()
+            )
+            if pakai_default == "y":
+                alamat = alamat_default
+                break
+            elif pakai_default != "n":
+                pesan_error = "Input tidak valid! Masukkan 'y' atau 'n'."
+                continue
+
         alamat_input = input(
-            f"Alamat penjemputan [Enter untuk '{user_target['alamat']}']: "
+            "Masukkan alamat penjemputan (min 5 karakter, maks 200 karakter): "
         ).strip()
-        alamat = alamat_input if alamat_input else user_target["alamat"]
-        if len(alamat) > 200 or len(alamat) < 5:
+        if not alamat_input:
+            pesan_error = "Alamat tidak boleh kosong!"
+            continue
+        if len(alamat_input) > 200 or len(alamat_input) < 5:
             pesan_error = "Alamat tidak boleh kurang dari 5 karakter atau lebih dari 200 karakter!"
             continue
+        alamat = alamat_input
         break
 
     # Status request (otomatis menunggu)
@@ -465,26 +483,30 @@ def update_request():
                     pesan_error = ""
 
                 if punya_default_valid:
-                    input_alamat = input(
-                        f"Alamat penjemputan [Enter untuk '{alamat_default_user}']: "
-                    ).strip()
-                    alamat_kandidat = (
-                        input_alamat if input_alamat else alamat_default_user
+                    pakai_default = (
+                        input(
+                            f"Gunakan alamat default '{alamat_default_user}'? [y/n]: "
+                        )
+                        .strip()
+                        .lower()
                     )
-                else:
-                    input_alamat = input(
-                        "Masukkan alamat penjemputan baru (min 5 karakter, maks 200 karakter): "
-                    ).strip()
-                    if not input_alamat:
-                        pesan_error = "Alamat tidak boleh kosong!"
+                    if pakai_default == "y":
+                        alamat_baru = alamat_default_user
+                        break
+                    elif pakai_default != "n":
+                        pesan_error = "Input tidak valid! Masukkan 'y' atau 'n'."
                         continue
-                    alamat_kandidat = input_alamat
 
-                if len(alamat_kandidat) > 200 or len(alamat_kandidat) < 5:
+                input_alamat = input(
+                    "Masukkan alamat penjemputan baru (min 5 karakter, maks 200 karakter): "
+                ).strip()
+                if not input_alamat:
+                    pesan_error = "Alamat tidak boleh kosong!"
+                    continue
+                if len(input_alamat) > 200 or len(input_alamat) < 5:
                     pesan_error = "Alamat tidak boleh kurang dari 5 karakter atau lebih dari 200 karakter!"
                     continue
-
-                alamat_baru = alamat_kandidat
+                alamat_baru = input_alamat
                 break
 
         elif pilihan == "4":

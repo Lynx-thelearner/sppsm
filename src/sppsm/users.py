@@ -93,6 +93,9 @@ def create_user(role="warga"):
         if len(username) > 20 or len(username) < 3:
             pesan_error = "Username tidak boleh lebih kecil dari 3 karakter atau lebih besar dari 20 karakter! Coba lagi."
             continue
+        if not username.isalnum():
+            pesan_error = "Username hanya boleh berisi huruf dan angka! Coba lagi."
+            continue
 
         conn = get_connection()
         try:
@@ -155,13 +158,29 @@ def create_user(role="warga"):
             print(f"[!] {pesan_error}\n")
             pesan_error = ""
 
+        
         nama = input("Masukkan nama anda (min 3 karakter, maks 100 karakter): ").strip()
+
+        cek_nama = (
+                nama.replace(" ", "")
+            	.replace("'", "")
+            	.replace("-", "")
+            	.replace(".", "")
+            	.replace("`", "")
+            )
+
+        if not cek_nama.isalpha():
+            print("Nama hanya boleh berisi huruf dan tanda baca yang wajar (', -, .)! Coba lagi.")
+            continue
+        
         if not nama:
             pesan_error = "Nama tidak boleh kosong! Coba lagi."
             continue
         if len(nama) > 100 or len(nama) < 3:
             pesan_error = "Nama tidak boleh lebih kecil dari 3 karakter atau lebih besar dari 100 karakter! Coba lagi."
             continue
+        if nama.replace(" ", "").isalpha:
+            pesan_error = "Nama tidak boleh "
         break
 
     # Input alamat
@@ -177,6 +196,11 @@ def create_user(role="warga"):
         alamat = input(
             "Masukkan alamat anda (min 5 karakter, maks 200 karakter): "
         ).strip()
+
+        if not any(c.isalnum() for c in alamat):
+            pesan_error = "Alamat harus mengandung huruf atau angka!"
+            continue
+                
         if not alamat:
             pesan_error = "Alamat tidak boleh kosong! Coba lagi."
             continue
@@ -326,6 +350,19 @@ def update_user():
                 input_nama = input(
                     "Masukkan nama baru (min 3 karakter, maks 100 karakter): "
                 ).strip()
+
+                cek_nama = (
+                        input_nama.replace(" ", "")
+                    	.replace("'", "")
+                    	.replace("-", "")
+                    	.replace(".", "")
+                    	.replace("`", "")
+                    )
+        
+                if not cek_nama.isalpha():
+                    print("Nama hanya boleh berisi huruf dan tanda baca yang wajar (', -, .)! Coba lagi.")
+                    continue
+                    
                 if not input_nama:
                     pesan_error = "Nama tidak boleh kosong! Coba lagi."
                     continue
@@ -346,10 +383,15 @@ def update_user():
                 if pesan_error:
                     print(f"[!] {pesan_error}\n")
                     pesan_error = ""
-
+                    
                 input_alamat = input(
                     "Masukkan alamat baru (min 5 karakter, maks 200 karakter): "
                 ).strip()
+
+                if not any(c.isalnum() for c in input_alamat):
+                    pesan_error = "Alamat harus mengandung huruf atau angka!"
+                    continue
+                        
                 if not input_alamat:
                     pesan_error = "Alamat tidak boleh kosong! Coba lagi."
                     continue

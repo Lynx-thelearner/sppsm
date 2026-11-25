@@ -249,6 +249,11 @@ def create_request():
         alamat_input = input(
             "Masukkan alamat penjemputan (min 5 karakter, maks 200 karakter): "
         ).strip()
+
+        if not any(c.isalnum() for c in alamat_input):
+            pesan_error = "Alamat harus mengandung huruf atau angka!"
+            continue
+                
         if not alamat_input:
             pesan_error = "Alamat tidak boleh kosong!"
             continue
@@ -500,6 +505,11 @@ def update_request():
                 input_alamat = input(
                     "Masukkan alamat penjemputan baru (min 5 karakter, maks 200 karakter): "
                 ).strip()
+
+                if not any(c.isalnum() for c in input_alamat):
+                    pesan_error = "Alamat harus mengandung huruf atau angka!"
+                    continue
+                    
                 if not input_alamat:
                     pesan_error = "Alamat tidak boleh kosong!"
                     continue

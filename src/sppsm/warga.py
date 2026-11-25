@@ -82,11 +82,11 @@ def buat_request():
 
     alamat = None
     while True:
-        pilihan_alamat = input("Gunakan alamat default? [y/n]: ").strip().lower()
+        pilihan_alamat = input("\nGunakan alamat default? [y/n]: ").strip().lower()
         if pilihan_alamat == "y":
             if not alamat_default or not (5 <= len(alamat_default) <= 200):
                 print(
-                    "Alamat default tidak valid (harus 5–200 karakter). Silakan pilih 'n' untuk memasukkan alamat lain."
+                    "\nAlamat default tidak valid (harus 5–200 karakter). Silakan pilih 'n' untuk memasukkan alamat lain."
                 )
                 enter()
                 continue
@@ -96,6 +96,11 @@ def buat_request():
             alamat_input = input(
                 "Masukkan alamat jemput lain (5–200 karakter): "
             ).strip()
+
+            if not any(c.isalnum() for c in alamat_input):
+                print("Alamat harus mengandung huruf atau angka!")
+                continue
+                
             if not alamat_input:
                 print("Alamat tidak boleh kosong.")
                 enter()
@@ -107,7 +112,7 @@ def buat_request():
             alamat = alamat_input
             break
         else:
-            print("Pilihan hanya 'y' dan 'n'.")
+            print("\nPilihan hanya 'y' dan 'n'.")
             enter()
 
     catatan = None

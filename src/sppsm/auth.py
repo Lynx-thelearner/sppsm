@@ -120,6 +120,11 @@ def register():
             enter()
             continue
 
+        if not username.isalnum():
+            print("Username hanya boleh berisi huruf dan angka! Coba lagi.")
+            enter()
+            continue
+
         if not (3 <= len(username) <= 20):
             print(
                 "Username tidak boleh lebih kecil dari 3 karakter atau lebih besar dari 20 karakter! Coba lagi."
@@ -187,8 +192,21 @@ def register():
     while True:
         nama = input("Masukkan nama anda (min 3 karakter, maks 100 karakter): ").strip()
 
-        if not nama:
-            print("Nama tidak boleh kosong! Coba lagi.")
+        cek_nama = (
+                nama.replace(" ", "")
+            	.replace("'", "")
+            	.replace("-", "")
+            	.replace(".", "")
+            	.replace("`", "")
+            )
+        
+        if not cek_nama.isalpha():
+            print("Nama hanya boleh berisi huruf dan tanda baca yang wajar (', -, .)! Coba lagi.")
+            enter()
+            continue
+
+        if not cek_nama.isalpha():
+            print("Nama hanya boleh berisi huruf dan angka! Coba lagi.")
             enter()
             continue
 
@@ -206,6 +224,11 @@ def register():
         alamat = input(
             "Masukkan alamat anda (min 5 karakter, maks 200 karakter): "
         ).strip()
+
+        if not any(c.isalnum() for c in alamat):
+            print("Alamat harus mengandung huruf atau angka!")
+            continue
+                
         if not alamat:
             print("Alamat tidak boleh kosong.")
             enter()

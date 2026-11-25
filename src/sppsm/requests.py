@@ -1,3 +1,4 @@
+import math
 import sqlite3
 from datetime import datetime
 
@@ -34,7 +35,7 @@ def _tampilkan_tabel_requests(data):
         "ID",
         "Pengaju",
         "Tgl Pengajuan",
-        "tanggal Jemput",
+        "Tgl Jemput",
         "Berat (kg)",
         "Alamat",
         "Status",
@@ -42,7 +43,7 @@ def _tampilkan_tabel_requests(data):
     ]
     tabel.align["Pengaju"] = "l"
     tabel.align["Tgl Pengajuan"] = "l"
-    tabel.align["tanggal Jemput"] = "l"
+    tabel.align["Tgl Jemput"] = "l"
     tabel.align["Berat (kg)"] = "r"
     tabel.align["Alamat"] = "l"
     tabel.align["Status"] = "l"
@@ -74,19 +75,22 @@ def _tampilkan_tabel_requests(data):
     print(tabel)
 
 
-# Ini untuk menampilkan daftar user yang bisa dipilih sebagai pengaju
-def _tampilkan_daftar_user():
+# Ambil daftar user yang bisa dipilih sebagai pengaju
+def _get_daftar_user():
     conn = get_connection()
     try:
-        users = conn.execute(
-            "SELECT user_id, username, nama, alamat, role FROM users"
+        return conn.execute(
+            "SELECT user_id, username, nama, alamat, role FROM users ORDER BY user_id ASC"
         ).fetchall()
+    except sqlite3.Error as e:
+        print(f"\nGagal mengambil daftar user: {e}")
+        return []
     finally:
         conn.close()
 
-    if not users:
-        return []
 
+# Cetak tabel daftar user yang sudah diambil
+def _cetak_tabel_user(users):
     tabel = PrettyTable()
     tabel.field_names = ["ID", "Username", "Nama", "Alamat", "Role"]
     tabel.align["Username"] = "l"
@@ -108,7 +112,6 @@ def _tampilkan_daftar_user():
 
     print("\n--- Daftar User Tersedia ---")
     print(tabel)
-    return users
 
 
 # Tampilkan Requests (Read)
@@ -127,18 +130,26 @@ def read_requests():
 
 # Buat Request Baru (Create)
 def create_request():
-    clear()
-    print("\n=== BUAT REQUEST PENJEMPUTAN BARU ===")
-    print("(Ketik '0' pada user_id untuk kembali ke menu)\n")
-
-    users = _tampilkan_daftar_user()
+    users = _get_daftar_user()
     if not users:
+        clear()
+        print("\n=== BUAT REQUEST PENJEMPUTAN BARU ===")
         print("Belum ada user di database. Buat user terlebih dahulu!")
         input("\nTekan Enter untuk kembali ke menu...")
         return
 
-    # Pilih user_id pengaju
+    pesan_error = ""
     while True:
+        clear()
+        print("\n=== BUAT REQUEST PENJEMPUTAN BARU ===")
+        print("(Ketik '0' pada user_id untuk kembali ke menu)")
+        _cetak_tabel_user(users)
+
+        if pesan_error:
+            print(f"\n[!] {pesan_error}")
+            pesan_error = ""
+
+        # Pilih user_id pengaju
         try:
             user_id = int(
                 input(
@@ -148,62 +159,108 @@ def create_request():
             if user_id == 0:
                 return
             if user_id < 0 or user_id > 9223372036854775807:
-                print("user_id tidak valid atau terlalu besar!")
+                pesan_error = "user_id tidak valid atau terlalu besar!"
                 continue
         except ValueError:
-            print("user_id harus berupa angka!")
+            pesan_error = "user_id harus berupa angka!"
             continue
 
         conn = get_connection()
-        user_target = conn.execute(
-            "SELECT * FROM users WHERE user_id = ?", (user_id,)
-        ).fetchone()
-        conn.close()
+        try:
+            user_target = conn.execute(
+                "SELECT * FROM users WHERE user_id = ?", (user_id,)
+            ).fetchone()
+        except sqlite3.Error as e:
+            print(f"\nGagal memeriksa user: {e}")
+            input("\nTekan Enter untuk kembali ke menu...")
+            return
+        finally:
+            conn.close()
 
         if not user_target:
-            print(f"User dengan ID {user_id} tidak ditemukan!")
+            pesan_error = f"User dengan ID {user_id} tidak ditemukan!"
         else:
             break
 
-    # Tanggal pengajuan (otomatis waktu sekarang atau custom)
-    waktu_sekarang = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    tgl_input = input(f"Tanggal pengajuan [Enter untuk '{waktu_sekarang}']: ").strip()
-    tanggal_pengajuan = tgl_input if tgl_input else waktu_sekarang
+    # Tanggal pengajuan otomatis waktu sekarang
+    tanggal_pengajuan = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # tanggal penjemputan (opsional)
-    tanggal_input = input(
-        "tanggal penjemputan (Contoh: 2026-11-20 09:00:00, Enter jika belum ada): "
-    ).strip()
-    tanggal_penjemputan = tanggal_input if tanggal_input else None
+    # tanggal penjemputan belum ada saat request dibuat
+    tanggal_penjemputan = None
 
-    # Berat sampah (opsional, >= 0)
+    # Berat sampah (opsional, >0 - 250 kg, dibulatkan 2 desimal)
+    pesan_error = ""
     while True:
+        clear()
+        print("\n=== BUAT REQUEST PENJEMPUTAN BARU ===")
+        print(
+            f"Pengaju: {user_target['nama']} ({user_target['username']}) | Tgl Pengajuan: {tanggal_pengajuan}\n"
+        )
+        if pesan_error:
+            print(f"[!] {pesan_error}\n")
+            pesan_error = ""
+
         berat_input = input(
-            "Perkiraan berat sampah dalam kg (Opsional, Enter jika kosong): "
+            "Perkiraan berat sampah dalam kg (Opsional, >0-250 kg, Enter jika kosong): "
         ).strip()
         if not berat_input:
             berat_sampah = None
             break
         try:
-            berat_sampah = float(berat_input)
-            if berat_sampah < 0:
-                print("Berat sampah tidak boleh negatif!")
+            nilai_berat = float(berat_input)
+            if not math.isfinite(nilai_berat) or nilai_berat <= 0:
+                pesan_error = (
+                    "Berat sampah harus lebih dari 0 kg dan berupa angka valid!"
+                )
                 continue
+            if nilai_berat > 250:
+                pesan_error = "Berat sampah maksimal 250 kg (rentang >0-250 kg)!"
+                continue
+            berat_sampah = round(nilai_berat, 2)
             break
         except ValueError:
-            print("Berat sampah harus berupa angka (contoh: 2.5)!")
+            pesan_error = "Berat sampah harus berupa angka (>0-250 kg, contoh: 2.5)!"
 
     # Alamat penjemputan (default ambil dari alamat user)
-    alamat_input = input(
-        f"Alamat penjemputan [Enter untuk '{user_target['alamat']}']: "
-    ).strip()
-    alamat = alamat_input if alamat_input else user_target["alamat"]
+    pesan_error = ""
+    while True:
+        clear()
+        print("\n=== BUAT REQUEST PENJEMPUTAN BARU ===")
+        print(f"Pengaju: {user_target['nama']} ({user_target['username']})\n")
+        if pesan_error:
+            print(f"[!] {pesan_error}\n")
+            pesan_error = ""
+
+        alamat_input = input(
+            f"Alamat penjemputan [Enter untuk '{user_target['alamat']}']: "
+        ).strip()
+        alamat = alamat_input if alamat_input else user_target["alamat"]
+        if len(alamat) > 200 or len(alamat) < 5:
+            pesan_error = "Alamat tidak boleh kurang dari 5 karakter atau lebih dari 200 karakter!"
+            continue
+        break
 
     # Status request (otomatis menunggu)
     status = "menunggu"
 
-    # Catatan (opsional)
-    catatan = input("Catatan tambahan (Opsional, Enter jika kosong): ").strip()
+    # Catatan (opsional, maks 250 karakter)
+    pesan_error = ""
+    while True:
+        clear()
+        print("\n=== BUAT REQUEST PENJEMPUTAN BARU ===")
+        print(f"Pengaju: {user_target['nama']} ({user_target['username']})\n")
+        if pesan_error:
+            print(f"[!] {pesan_error}\n")
+            pesan_error = ""
+
+        catatan_input = input(
+            "Catatan tambahan (Opsional, maks 250 karakter, Enter jika kosong): "
+        ).strip()
+        if len(catatan_input) > 250:
+            pesan_error = "Catatan tidak boleh lebih dari 250 karakter!"
+            continue
+        catatan = catatan_input if catatan_input else None
+        break
 
     conn = get_connection()
     try:
@@ -239,17 +296,23 @@ def create_request():
 
 # Ubah Data Request (Update - Admin)
 def update_request():
-    clear()
-    print("\n=== UPDATE DATA REQUEST ===")
     data = get_requests()
     if not data:
+        clear()
+        print("\n=== UPDATE DATA REQUEST ===")
         print("Belum ada data request di database.")
         input("\nTekan Enter untuk kembali ke menu...")
         return
 
-    _tampilkan_tabel_requests(data)
-
+    pesan_error = ""
     while True:
+        clear()
+        print("\n=== UPDATE DATA REQUEST ===")
+        _tampilkan_tabel_requests(data)
+        if pesan_error:
+            print(f"\n[!] {pesan_error}")
+            pesan_error = ""
+
         try:
             target_id = int(
                 input(
@@ -259,55 +322,65 @@ def update_request():
             if target_id == 0:
                 return
             if target_id < 0 or target_id > 9223372036854775807:
-                print("request_id tidak valid atau terlalu besar!")
+                pesan_error = "request_id tidak valid atau terlalu besar!"
                 continue
             break
         except ValueError:
-            print("request_id harus berupa angka!")
+            pesan_error = "request_id harus berupa angka!"
 
     conn = get_connection()
-    req_lama = conn.execute(
-        "SELECT * FROM requests WHERE request_id = ?", (target_id,)
-    ).fetchone()
-    conn.close()
+    try:
+        req_lama = conn.execute(
+            "SELECT * FROM requests WHERE request_id = ?", (target_id,)
+        ).fetchone()
+    except sqlite3.Error as e:
+        print(f"\nGagal mengambil data request: {e}")
+        input("\nTekan Enter untuk kembali ke menu...")
+        return
+    finally:
+        conn.close()
 
     if not req_lama:
-        print(f"Request dengan ID {target_id} tidak ditemukan!")
+        clear()
+        print(f"\nRequest dengan ID {target_id} tidak ditemukan!")
         input("\nTekan Enter untuk kembali ke menu...")
         return
 
     # Simpan nilai sementara sebelum disimpan permanen
-    user_id_baru = req_lama["user_id"]
-    tgl_pengajuan_baru = req_lama["tanggal_pengajuan"]
     tanggal_baru = req_lama["tanggal_penjemputan"]
     berat_baru = req_lama["berat_sampah"]
     alamat_baru = req_lama["alamat"]
     status_baru = req_lama["status"]
     catatan_baru = req_lama["catatan"]
 
+    conn = get_connection()
+    try:
+        u_info = conn.execute(
+            "SELECT username, nama FROM users WHERE user_id = ?",
+            (req_lama["user_id"],),
+        ).fetchone()
+    except sqlite3.Error:
+        u_info = None
+    finally:
+        conn.close()
+
+    label_pengaju = (
+        f"{u_info['nama']} ({u_info['username']}) [ID: {req_lama['user_id']}]"
+        if u_info
+        else f"ID: {req_lama['user_id']}"
+    )
+
     while True:
         clear()
-        # Ambil username terbaru sesuai user_id_baru
-        conn = get_connection()
-        u_info = conn.execute(
-            "SELECT username, nama FROM users WHERE user_id = ?", (user_id_baru,)
-        ).fetchone()
-        conn.close()
-        label_pengaju = (
-            f"{u_info['nama']} ({u_info['username']}) [ID: {user_id_baru}]"
-            if u_info
-            else f"ID: {user_id_baru}"
-        )
-
         print("=== UPDATE DATA REQUEST ===")
-        print(f"Request ID         : {target_id}")
-        print(f"Pengaju            : {label_pengaju}")
-        print(f"Tanggal Pengajuan  : {tgl_pengajuan_baru}")
-        print(f"tanggal Penjemputan : {tanggal_baru or '-'}")
-        print(f"Berat Sampah (kg)  : {berat_baru if berat_baru is not None else '-'}")
-        print(f"Alamat             : {alamat_baru}")
-        print(f"Status             : {status_baru}")
-        print(f"Catatan            : {catatan_baru or '-'}")
+        print(f"Request ID          : {target_id}")
+        print(f"Pengaju             : {label_pengaju}")
+        print(f"Tanggal Pengajuan   : {req_lama['tanggal_pengajuan']}")
+        print(f"Tanggal Penjemputan : {tanggal_baru or '-'}")
+        print(f"Berat Sampah (kg)   : {berat_baru if berat_baru is not None else '-'}")
+        print(f"Alamat              : {alamat_baru}")
+        print(f"Status              : {status_baru}")
+        print(f"Catatan             : {catatan_baru or '-'}")
         print("-" * 45)
 
         pertanyaan = [
@@ -315,138 +388,167 @@ def update_request():
                 "kolom",
                 message="Pilih data yang ingin diubah:",
                 choices=[
-                    "1. Pengaju (user_id)",
-                    "2. Tanggal Pengajuan",
-                    "3. tanggal Penjemputan",
-                    "4. Berat Sampah (kg)",
-                    "5. Alamat Penjemputan",
-                    "6. Status Request",
-                    "7. Catatan",
-                    "8. Simpan perubahan dan selesai",
-                    "9. Batal (buang perubahan)",
+                    "1. Tanggal Penjemputan",
+                    "2. Berat Sampah (kg)",
+                    "3. Alamat Penjemputan",
+                    "4. Status Request",
+                    "5. Catatan",
+                    "6. Simpan perubahan dan selesai",
+                    "7. Batal (buang perubahan)",
                 ],
             )
         ]
 
         jawaban = inquirer.prompt(pertanyaan)
-        pilihan = jawaban["kolom"][0] if jawaban else "9"
+        pilihan = jawaban["kolom"][0] if jawaban else "7"
 
         if pilihan == "1":
-            _tampilkan_daftar_user()
-            while True:
-                try:
-                    uid_input = int(
-                        input("\nMasukkan user_id pengaju yang baru: ").strip()
-                    )
-                    if uid_input <= 0 or uid_input > 9223372036854775807:
-                        print("user_id tidak valid!")
-                        continue
-                except ValueError:
-                    print("user_id harus berupa angka!")
-                    continue
-
-                conn = get_connection()
-                cek_user = conn.execute(
-                    "SELECT 1 FROM users WHERE user_id = ?", (uid_input,)
-                ).fetchone()
-                conn.close()
-
-                if not cek_user:
-                    print(f"User dengan ID {uid_input} tidak ditemukan!")
-                else:
-                    user_id_baru = uid_input
-                    print("Pengaju berhasil diubah sementara.")
-                    break
+            clear()
+            print("=== UPDATE TANGGAL PENJEMPUTAN ===")
+            print(f"Request ID                  : {target_id}")
+            print(f"Tanggal Penjemputan Saat Ini: {tanggal_baru or '-'}")
+            tanggal_baru = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            print(
+                f"Tanggal Penjemputan Baru    : {tanggal_baru} (otomatis waktu sekarang)"
+            )
+            input("\nTekan Enter untuk melanjutkan...")
 
         elif pilihan == "2":
+            pesan_error = ""
             while True:
-                input_tgl = input(
-                    "\nMasukkan tanggal pengajuan baru (YYYY-MM-DD HH:MM:SS): "
-                ).strip()
-                if not input_tgl:
-                    print("Tanggal pengajuan tidak boleh kosong!")
-                else:
-                    tgl_pengajuan_baru = input_tgl
-                    print("Tanggal pengajuan berhasil diubah sementara.")
-                    break
+                clear()
+                print("=== UPDATE BERAT SAMPAH (KG) ===")
+                print(f"Request ID         : {target_id}")
+                print(
+                    f"Berat Saat Ini     : {berat_baru if berat_baru is not None else '-'}\n"
+                )
+                if pesan_error:
+                    print(f"[!] {pesan_error}\n")
+                    pesan_error = ""
 
-        elif pilihan == "3":
-            input_tanggal = input(
-                "\nMasukkan tanggal penjemputan baru (Kosongkan/Enter untuk menghapus tanggal): "
-            ).strip()
-            tanggal_baru = input_tanggal if input_tanggal else None
-            print("tanggal penjemputan berhasil diubah sementara.")
-
-        elif pilihan == "4":
-            while True:
                 input_berat = input(
-                    "\nMasukkan berat sampah baru dalam kg (Enter untuk mengosongkan): "
+                    "Masukkan berat sampah baru dalam kg (>0-250 kg, Enter untuk mengosongkan): "
                 ).strip()
                 if not input_berat:
                     berat_baru = None
-                    print("Berat sampah dikosongkan sementara.")
                     break
                 try:
                     nilai_berat = float(input_berat)
-                    if nilai_berat < 0:
-                        print("Berat sampah tidak boleh negatif!")
+                    if not math.isfinite(nilai_berat) or nilai_berat <= 0:
+                        pesan_error = (
+                            "Berat sampah harus lebih dari 0 kg dan berupa angka valid!"
+                        )
                         continue
-                    berat_baru = nilai_berat
-                    print("Berat sampah berhasil diubah sementara.")
+                    if nilai_berat > 250:
+                        pesan_error = (
+                            "Berat sampah maksimal 250 kg (rentang >0-250 kg)!"
+                        )
+                        continue
+                    berat_baru = round(nilai_berat, 2)
                     break
                 except ValueError:
-                    print("Berat sampah harus berupa angka!")
+                    pesan_error = "Berat sampah harus berupa angka (>0-250 kg)!"
 
-        elif pilihan == "5":
+        elif pilihan == "3":
+            pesan_error = ""
             while True:
-                input_alamat = input("\nMasukkan alamat penjemputan baru: ").strip()
-                if not input_alamat:
-                    print("Alamat tidak boleh kosong!")
-                else:
-                    alamat_baru = input_alamat
-                    print("Alamat berhasil diubah sementara.")
-                    break
+                clear()
+                print("=== UPDATE ALAMAT PENJEMPUTAN ===")
+                print(f"Request ID      : {target_id}")
+                print(f"Alamat Saat Ini : {alamat_baru}\n")
+                if pesan_error:
+                    print(f"[!] {pesan_error}\n")
+                    pesan_error = ""
 
-        elif pilihan == "6":
+                input_alamat = input(
+                    "Masukkan alamat penjemputan baru (min 5 karakter, maks 200 karakter): "
+                ).strip()
+                if not input_alamat:
+                    pesan_error = "Alamat tidak boleh kosong!"
+                    continue
+                if len(input_alamat) > 200 or len(input_alamat) < 5:
+                    pesan_error = "Alamat tidak boleh kurang dari 5 karakter atau lebih dari 200 karakter!"
+                    continue
+                alamat_baru = input_alamat
+                break
+
+        elif pilihan == "4":
+            clear()
+            print("=== UPDATE STATUS REQUEST ===")
+            print(f"Request ID     : {target_id}")
+            print(f"Status Saat Ini: {status_baru}\n")
             tanya_status = [
                 inquirer.List(
                     "status_baru",
                     message="Pilih status baru:",
-                    choices=["menunggu", "selesai", "ditolak", "dibatalkan"],
+                    choices=["menunggu", "selesai", "ditolak"],
                 )
             ]
             jwb_status = inquirer.prompt(tanya_status)
             if jwb_status:
                 status_baru = jwb_status["status_baru"]
-                print(f"Status berhasil diubah sementara menjadi '{status_baru}'.")
 
-        elif pilihan == "7":
-            catatan_baru = input(
-                "\nMasukkan catatan baru (Enter untuk mengosongkan): "
-            ).strip()
-            print("Catatan berhasil diubah sementara.")
+        elif pilihan == "5":
+            pesan_error = ""
+            while True:
+                clear()
+                print("=== UPDATE CATATAN REQUEST ===")
+                print(f"Request ID      : {target_id}")
+                print(f"Catatan Saat Ini: {catatan_baru or '-'}\n")
+                if pesan_error:
+                    print(f"[!] {pesan_error}\n")
+                    pesan_error = ""
 
-        elif pilihan == "8":
+                catatan_input = input(
+                    "Masukkan catatan baru (maks 250 karakter, Enter untuk mengosongkan): "
+                ).strip()
+                if len(catatan_input) > 250:
+                    pesan_error = "Catatan tidak boleh lebih dari 250 karakter!"
+                    continue
+                catatan_baru = catatan_input if catatan_input else None
+                break
+
+        elif pilihan == "6":
             break
 
-        elif pilihan == "9":
+        elif pilihan == "7":
             print("\nPerubahan dibatalkan. Data tidak disimpan.")
             input("\nTekan Enter untuk kembali ke menu...")
             return
 
-        lanjut = (
-            input("\nMasih ingin mengupdate data lainnya pada request ini? [y/n]: ")
-            .strip()
-            .lower()
-        )
-        if lanjut != "y":
+        pesan_error = ""
+        while True:
+            clear()
+            print("=== UPDATE DATA REQUEST ===")
+            print(f"Request ID          : {target_id}")
+            print(f"Pengaju             : {label_pengaju}")
+            print(f"Tanggal Penjemputan : {tanggal_baru or '-'}")
+            print(
+                f"Berat Sampah (kg)   : {berat_baru if berat_baru is not None else '-'}"
+            )
+            print(f"Alamat              : {alamat_baru}")
+            print(f"Status              : {status_baru}")
+            print(f"Catatan             : {catatan_baru or '-'}")
+            print("-" * 45)
+            if pesan_error:
+                print(f"\n[!] {pesan_error}")
+                pesan_error = ""
+
+            lanjut = (
+                input("\nMasih ingin mengupdate data lainnya pada request ini? [y/n]: ")
+                .strip()
+                .lower()
+            )
+            if lanjut in ("y", "n"):
+                break
+            pesan_error = "Input tidak valid! Masukkan 'y' atau 'n'."
+
+        if lanjut == "n":
             break
 
     # Cek apakah ada data yang benar-benar berubah sebelum menulis ke database
     if (
-        user_id_baru == req_lama["user_id"]
-        and tgl_pengajuan_baru == req_lama["tanggal_pengajuan"]
-        and tanggal_baru == req_lama["tanggal_penjemputan"]
+        tanggal_baru == req_lama["tanggal_penjemputan"]
         and berat_baru == req_lama["berat_sampah"]
         and alamat_baru == req_lama["alamat"]
         and status_baru == req_lama["status"]
@@ -461,9 +563,7 @@ def update_request():
         conn.execute(
             """
             UPDATE requests
-            SET user_id = ?,
-                tanggal_pengajuan = ?,
-                tanggal_penjemputan = ?,
+            SET tanggal_penjemputan = ?,
                 berat_sampah = ?,
                 alamat = ?,
                 status = ?,
@@ -471,8 +571,6 @@ def update_request():
             WHERE request_id = ?
             """,
             (
-                user_id_baru,
-                tgl_pengajuan_baru,
                 tanggal_baru,
                 berat_baru,
                 alamat_baru,
@@ -495,17 +593,23 @@ def update_request():
 
 # Hapus Request (Delete)
 def delete_request():
-    clear()
-    print("\n=== HAPUS DATA REQUEST ===")
     data = get_requests()
     if not data:
+        clear()
+        print("\n=== HAPUS DATA REQUEST ===")
         print("Belum ada data request di database.")
         input("\nTekan Enter untuk kembali ke menu...")
         return
 
-    _tampilkan_tabel_requests(data)
-
+    pesan_error = ""
     while True:
+        clear()
+        print("\n=== HAPUS DATA REQUEST ===")
+        _tampilkan_tabel_requests(data)
+        if pesan_error:
+            print(f"\n[!] {pesan_error}")
+            pesan_error = ""
+
         try:
             target_id = int(
                 input(
@@ -515,39 +619,61 @@ def delete_request():
             if target_id == 0:
                 return
             if target_id < 0 or target_id > 9223372036854775807:
-                print("request_id tidak valid atau terlalu besar!")
+                pesan_error = "request_id tidak valid atau terlalu besar!"
                 continue
             break
         except ValueError:
-            print("request_id harus berupa angka!")
+            pesan_error = "request_id harus berupa angka!"
 
     conn = get_connection()
-    req_target = conn.execute(
-        """
-        SELECT r.request_id, r.status, r.tanggal_pengajuan, u.username
-        FROM requests r
-        LEFT JOIN users u ON r.user_id = u.user_id
-        WHERE r.request_id = ?
-        """,
-        (target_id,),
-    ).fetchone()
-    conn.close()
+    try:
+        req_target = conn.execute(
+            """
+            SELECT r.request_id, r.status, r.tanggal_pengajuan, u.username
+            FROM requests r
+            LEFT JOIN users u ON r.user_id = u.user_id
+            WHERE r.request_id = ?
+            """,
+            (target_id,),
+        ).fetchone()
+    except sqlite3.Error as e:
+        print(f"\nGagal memeriksa data request: {e}")
+        input("\nTekan Enter untuk kembali ke menu...")
+        return
+    finally:
+        conn.close()
 
     if not req_target:
-        print(f"Request dengan ID {target_id} tidak ditemukan!")
+        clear()
+        print(f"\nRequest dengan ID {target_id} tidak ditemukan!")
         input("\nTekan Enter untuk kembali ke menu...")
         return
 
     pengaju = req_target["username"] or "User tidak diketahui"
-    konfirmasi = (
-        input(
-            f"Yakin ingin menghapus request ID {target_id} milik '{pengaju}' (Status: {req_target['status']})? [y/n]: "
+    pesan_error = ""
+    while True:
+        clear()
+        print("\n=== HAPUS DATA REQUEST ===")
+        print(
+            f"Target Request : ID {target_id} milik '{pengaju}' (Status: {req_target['status']})\n"
         )
-        .strip()
-        .lower()
-    )
-    if konfirmasi != "y":
-        print("Penghapusan dibatalkan.")
+        if pesan_error:
+            print(f"[!] {pesan_error}\n")
+            pesan_error = ""
+
+        konfirmasi = (
+            input(
+                f"Yakin ingin menghapus request ID {target_id} milik '{pengaju}' (Status: {req_target['status']})? [y/n]: "
+            )
+            .strip()
+            .lower()
+        )
+        if konfirmasi in ("y", "n"):
+            break
+        pesan_error = "Input tidak valid! Masukkan 'y' atau 'n'."
+
+    if konfirmasi == "n":
+        print("\nPenghapusan dibatalkan.")
         input("\nTekan Enter untuk kembali ke menu...")
         return
 

@@ -42,7 +42,6 @@ def login():
             password = pwinput.pwinput(prompt="Password : ", mask="*")
             if not password:
                 print("Input password tidak boleh kosong.")
-                enter()
                 continue
             break
 

@@ -324,27 +324,27 @@ def update_request():
             if target_id < 0 or target_id > 9223372036854775807:
                 pesan_error = "request_id tidak valid atau terlalu besar!"
                 continue
-            break
         except ValueError:
             pesan_error = "request_id harus berupa angka!"
+            continue
 
-    conn = get_connection()
-    try:
-        req_lama = conn.execute(
-            "SELECT * FROM requests WHERE request_id = ?", (target_id,)
-        ).fetchone()
-    except sqlite3.Error as e:
-        print(f"\nGagal mengambil data request: {e}")
-        input("\nTekan Enter untuk kembali ke menu...")
-        return
-    finally:
-        conn.close()
+        conn = get_connection()
+        try:
+            req_lama = conn.execute(
+                "SELECT * FROM requests WHERE request_id = ?", (target_id,)
+            ).fetchone()
+        except sqlite3.Error as e:
+            print(f"\nGagal mengambil data request: {e}")
+            input("\nTekan Enter untuk kembali ke menu...")
+            return
+        finally:
+            conn.close()
 
-    if not req_lama:
-        clear()
-        print(f"\nRequest dengan ID {target_id} tidak ditemukan!")
-        input("\nTekan Enter untuk kembali ke menu...")
-        return
+        if not req_lama:
+            pesan_error = f"Request dengan ID {target_id} tidak ditemukan!"
+            continue
+
+        break
 
     # Simpan nilai sementara sebelum disimpan permanen
     tanggal_baru = req_lama["tanggal_penjemputan"]
@@ -621,33 +621,33 @@ def delete_request():
             if target_id < 0 or target_id > 9223372036854775807:
                 pesan_error = "request_id tidak valid atau terlalu besar!"
                 continue
-            break
         except ValueError:
             pesan_error = "request_id harus berupa angka!"
+            continue
 
-    conn = get_connection()
-    try:
-        req_target = conn.execute(
-            """
-            SELECT r.request_id, r.status, r.tanggal_pengajuan, u.username
-            FROM requests r
-            LEFT JOIN users u ON r.user_id = u.user_id
-            WHERE r.request_id = ?
-            """,
-            (target_id,),
-        ).fetchone()
-    except sqlite3.Error as e:
-        print(f"\nGagal memeriksa data request: {e}")
-        input("\nTekan Enter untuk kembali ke menu...")
-        return
-    finally:
-        conn.close()
+        conn = get_connection()
+        try:
+            req_target = conn.execute(
+                """
+                SELECT r.request_id, r.status, r.tanggal_pengajuan, u.username
+                FROM requests r
+                LEFT JOIN users u ON r.user_id = u.user_id
+                WHERE r.request_id = ?
+                """,
+                (target_id,),
+            ).fetchone()
+        except sqlite3.Error as e:
+            print(f"\nGagal memeriksa data request: {e}")
+            input("\nTekan Enter untuk kembali ke menu...")
+            return
+        finally:
+            conn.close()
 
-    if not req_target:
-        clear()
-        print(f"\nRequest dengan ID {target_id} tidak ditemukan!")
-        input("\nTekan Enter untuk kembali ke menu...")
-        return
+        if not req_target:
+            pesan_error = f"Request dengan ID {target_id} tidak ditemukan!"
+            continue
+
+        break
 
     pengaju = req_target["username"] or "User tidak diketahui"
     pesan_error = ""

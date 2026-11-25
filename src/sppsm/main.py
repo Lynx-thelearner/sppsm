@@ -11,11 +11,11 @@ from .warga import jalankan_menu_warga
 def main() -> None:
     try:
         init_db()
-    
+
         while True:
             clear()
             print("=== Sistem Pengelolaan Penjemputan Sampah Mandiri ===")
-    
+
             if session["is_login"]:
                 role = session["role"]
                 if role == "admin":

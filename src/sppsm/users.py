@@ -687,10 +687,13 @@ def menu_crud_user(current_user_id=None):
                 role_pilihan = role_jawaban["pilihan"][0] if role_jawaban else "4"
                 if role_pilihan == "1":
                     create_user()
+                    break
                 elif role_pilihan == "2":
                     create_user("admin")
+                    break
                 elif role_pilihan == "3":
                     create_user("petugas")
+                    break
                 else:
                     break
 

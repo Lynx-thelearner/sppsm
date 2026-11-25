@@ -3,7 +3,7 @@ from contextlib import closing
 from datetime import datetime
 
 import inquirer
-from prettytable.prettytable import PrettyTable
+from prettytable import PrettyTable
 
 from .auth import logout, session
 from .database import get_connection
@@ -53,20 +53,21 @@ def lihat_riwayat():
             "ID",
             "Tanggal Pengajuan",
             "Tanggal Penjemputan",
-            "status",
+            "Status",
             "Berat (kg)",
             "Catatan",
         ]
     )
-    for i in requests:
+    for row in requests:
+        berat_tampil = row["berat_sampah"] if row["berat_sampah"] is not None else "-"
         table.add_row(
             [
-                i["request_id"],
-                i["tanggal_pengajuan"],
-                i["tanggal_penjemputan"] or "-",
-                i["status"],
-                i["berat_sampah"] or "-",
-                i["catatan"] or "-",
+                row["request_id"],
+                row["tanggal_pengajuan"],
+                row["tanggal_penjemputan"] or "-",
+                row["status"],
+                berat_tampil,
+                row["catatan"] or "-",
             ]
         )
     print(table)
@@ -76,33 +77,60 @@ def lihat_riwayat():
 def buat_request():
     clear()
     print("=== Buat Requests ===")
-    alamat_default = session["alamat"] or ""
-    print(f"Alamat default {alamat_default}")
+    alamat_default = (session["alamat"] or "").strip()
+    print(f"Alamat default: {alamat_default or '-'}")
 
+    alamat = None
     while True:
-        default = input("Gunakan alamat default? [y/n]: ").strip().lower()
-        if default == "y":
+        pilihan_alamat = input("Gunakan alamat default? [y/n]: ").strip().lower()
+        if pilihan_alamat == "y":
+            if not alamat_default or not (5 <= len(alamat_default) <= 200):
+                print(
+                    "Alamat default tidak valid (harus 5–200 karakter). Silakan pilih 'n' untuk memasukkan alamat lain."
+                )
+                enter()
+                continue
             alamat = alamat_default
             break
-        elif default == "n":
-            alamat = input("Masukkan alamat jemput lain: ").strip()
-            if not alamat:
-                print("Alamat tidak boleh kosong")
-                return
+        elif pilihan_alamat == "n":
+            alamat_input = input(
+                "Masukkan alamat jemput lain (5–200 karakter): "
+            ).strip()
+            if not alamat_input:
+                print("Alamat tidak boleh kosong.")
+                enter()
+                continue
+            if not (5 <= len(alamat_input) <= 200):
+                print("Alamat harus terdiri dari 5 hingga 200 karakter.")
+                enter()
+                continue
+            alamat = alamat_input
             break
         else:
-            input("Pilihan hanya 'y' dan 't'")
+            print("Pilihan hanya 'y' dan 'n'.")
+            enter()
 
-    catatan = input("Input catatan, (Opsional)")
+    catatan = None
+    while True:
+        catatan_input = input(
+            "Input catatan (Opsional, maksimal 250 karakter): "
+        ).strip()
+        if len(catatan_input) > 250:
+            print("Catatan maksimal 250 karakter. Silakan ulangi.")
+            enter()
+            continue
+        catatan = catatan_input if catatan_input else None
+        break
+
     tanggal_sekarang = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     with closing(get_connection()) as conn:
         try:
             conn.execute(
                 """
-                            INSERT INTO requests (user_id, tanggal_pengajuan, alamat, status, catatan)
-                            VALUES (?, ?, ?, 'menunggu', ?)
-                            """,
+                INSERT INTO requests (user_id, tanggal_pengajuan, alamat, status, catatan)
+                VALUES (?, ?, ?, 'menunggu', ?)
+                """,
                 (session["user_id"], tanggal_sekarang, alamat, catatan),
             )
             conn.commit()
@@ -124,6 +152,7 @@ def batalkan_request():
                 SELECT request_id, tanggal_pengajuan, alamat
                 FROM requests
                 WHERE user_id = ? AND status = 'menunggu'
+                ORDER BY request_id ASC
                 """,
                 (session["user_id"],),
             ).fetchall()
@@ -140,12 +169,12 @@ def batalkan_request():
 
     choices = [
         (
-            f"[#{r['request_id']} Tanggal: {r['tanggal_pengajuan']} - {r['alamat']}:",
+            f"[#{r['request_id']}] Tanggal: {r['tanggal_pengajuan']} - {r['alamat']}",
             r["request_id"],
         )
         for r in requests
     ]
-    choices.append(("<< Kembali >> ", None))
+    choices.append(("<< Kembali >>", None))
 
     pertanyaan = [
         inquirer.List(
@@ -162,20 +191,24 @@ def batalkan_request():
 
     try:
         with closing(get_connection()) as conn:
-            conn.execute(
+            cursor = conn.execute(
                 """
                 UPDATE requests
                 SET status = 'dibatalkan'
-                WHERE request_id = ? AND user_id = ?
+                WHERE request_id = ? AND user_id = ? AND status = 'menunggu'
                 """,
                 (req_id, session["user_id"]),
             )
+            if cursor.rowcount == 0:
+                print("\nPengajuan tidak ditemukan atau statusnya sudah berubah.")
+                enter()
+                return
 
             conn.commit()
             print(f"\n[Sukses] Pengajuan #{req_id} berhasil dibatalkan")
             enter()
     except sqlite3.Error as e:
-        print("Ada kesalahan", e)
+        print("Ada kesalahan:", e)
         enter()
 
 

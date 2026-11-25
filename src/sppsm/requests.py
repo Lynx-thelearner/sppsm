@@ -356,7 +356,7 @@ def update_request():
     conn = get_connection()
     try:
         u_info = conn.execute(
-            "SELECT username, nama FROM users WHERE user_id = ?",
+            "SELECT username, nama, alamat FROM users WHERE user_id = ?",
             (req_lama["user_id"],),
         ).fetchone()
     except sqlite3.Error:
@@ -364,6 +364,7 @@ def update_request():
     finally:
         conn.close()
 
+    alamat_default_user = (u_info["alamat"] or "").strip() if u_info else ""
     label_pengaju = (
         f"{u_info['nama']} ({u_info['username']}) [ID: {req_lama['user_id']}]"
         if u_info
@@ -451,6 +452,9 @@ def update_request():
 
         elif pilihan == "3":
             pesan_error = ""
+            punya_default_valid = bool(
+                alamat_default_user and (5 <= len(alamat_default_user) <= 200)
+            )
             while True:
                 clear()
                 print("=== UPDATE ALAMAT PENJEMPUTAN ===")
@@ -460,16 +464,27 @@ def update_request():
                     print(f"[!] {pesan_error}\n")
                     pesan_error = ""
 
-                input_alamat = input(
-                    "Masukkan alamat penjemputan baru (min 5 karakter, maks 200 karakter): "
-                ).strip()
-                if not input_alamat:
-                    pesan_error = "Alamat tidak boleh kosong!"
-                    continue
-                if len(input_alamat) > 200 or len(input_alamat) < 5:
+                if punya_default_valid:
+                    input_alamat = input(
+                        f"Alamat penjemputan [Enter untuk '{alamat_default_user}']: "
+                    ).strip()
+                    alamat_kandidat = (
+                        input_alamat if input_alamat else alamat_default_user
+                    )
+                else:
+                    input_alamat = input(
+                        "Masukkan alamat penjemputan baru (min 5 karakter, maks 200 karakter): "
+                    ).strip()
+                    if not input_alamat:
+                        pesan_error = "Alamat tidak boleh kosong!"
+                        continue
+                    alamat_kandidat = input_alamat
+
+                if len(alamat_kandidat) > 200 or len(alamat_kandidat) < 5:
                     pesan_error = "Alamat tidak boleh kurang dari 5 karakter atau lebih dari 200 karakter!"
                     continue
-                alamat_baru = input_alamat
+
+                alamat_baru = alamat_kandidat
                 break
 
         elif pilihan == "4":

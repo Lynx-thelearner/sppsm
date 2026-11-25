@@ -220,13 +220,14 @@ def edit_requests_petugas():
 
             catatan = input("Masukkan alasan penolakan (maks 250 karakter): ").strip()
 
-            if not any(c.isalpha() for c in catatan):
-                    pesan_error = "Alasan penolakan harus berupa kalimat yang jelas (mengandung huruf)!"
-                    continue
-                    
             if not catatan:
                 pesan_error = "Input tidak boleh kosong."
                 continue
+
+            if not any(c.isalpha() for c in catatan):
+                pesan_error = "Alasan penolakan harus berupa kalimat yang jelas (mengandung huruf)!"
+                continue
+
             if len(catatan) > 250:
                 pesan_error = "Alasan penolakan maksimal 250 karakter. Silakan ulangi."
                 continue

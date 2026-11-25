@@ -97,14 +97,16 @@ def buat_request():
                 "Masukkan alamat jemput lain (5–200 karakter): "
             ).strip()
 
-            if not any(c.isalnum() for c in alamat_input):
-                print("Alamat harus mengandung huruf atau angka!")
-                continue
-                
             if not alamat_input:
                 print("Alamat tidak boleh kosong.")
                 enter()
                 continue
+
+            if not any(c.isalnum() for c in alamat_input):
+                print("Alamat harus mengandung huruf atau angka!")
+                enter()
+                continue
+
             if not (5 <= len(alamat_input) <= 200):
                 print("Alamat harus terdiri dari 5 hingga 200 karakter.")
                 enter()

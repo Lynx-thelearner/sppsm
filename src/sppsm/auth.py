@@ -193,20 +193,22 @@ def register():
         nama = input("Masukkan nama anda (min 3 karakter, maks 100 karakter): ").strip()
 
         cek_nama = (
-                nama.replace(" ", "")
-            	.replace("'", "")
-            	.replace("-", "")
-            	.replace(".", "")
-            	.replace("`", "")
-            )
-        
-        if not cek_nama.isalpha():
-            print("Nama hanya boleh berisi huruf dan tanda baca yang wajar (', -, .)! Coba lagi.")
+            nama.replace(" ", "")
+            .replace("'", "")
+            .replace("-", "")
+            .replace(".", "")
+            .replace("`", "")
+        )
+
+        if not nama:
+            print("Nama tidak boleh kosong! Coba lagi.")
             enter()
             continue
 
         if not cek_nama.isalpha():
-            print("Nama hanya boleh berisi huruf dan angka! Coba lagi.")
+            print(
+                "Nama hanya boleh berisi huruf dan tanda baca yang wajar (', -, .)! Coba lagi."
+            )
             enter()
             continue
 
@@ -225,12 +227,13 @@ def register():
             "Masukkan alamat anda (min 5 karakter, maks 200 karakter): "
         ).strip()
 
-        if not any(c.isalnum() for c in alamat):
-            print("Alamat harus mengandung huruf atau angka!")
-            continue
-                
         if not alamat:
             print("Alamat tidak boleh kosong.")
+            enter()
+            continue
+
+        if not any(c.isalnum() for c in alamat):
+            print("Alamat harus mengandung huruf atau angka!")
             enter()
             continue
 

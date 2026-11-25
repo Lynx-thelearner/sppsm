@@ -350,6 +350,10 @@ def update_user():
                     "Masukkan nama baru (min 3 karakter, maks 100 karakter): "
                 ).strip()
 
+                if not input_nama:
+                    pesan_error = "Nama tidak boleh kosong! Coba lagi."
+                    continue
+
                 cek_nama = (
                     input_nama.replace(" ", "")
                     .replace("'", "")
@@ -362,9 +366,6 @@ def update_user():
                     pesan_error = "Nama hanya boleh berisi huruf dan tanda baca yang wajar (', -, .)! Coba lagi."
                     continue
 
-                if not input_nama:
-                    pesan_error = "Nama tidak boleh kosong! Coba lagi."
-                    continue
                 if len(input_nama) > 100 or len(input_nama) < 3:
                     pesan_error = "Nama tidak boleh lebih kecil dari 3 karakter atau lebih besar dari 100 karakter! Coba lagi."
                     continue

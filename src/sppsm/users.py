@@ -257,23 +257,27 @@ def update_user():
             if target_id < 0 or target_id > 9223372036854775807:
                 pesan_error = "user_id tidak valid atau terlalu besar!"
                 continue
-            break
         except ValueError:
             pesan_error = "user_id harus berupa angka!"
+            continue
 
-    conn = get_connection()
-    try:
-        user_lama = conn.execute(
-            "SELECT * FROM users WHERE user_id = ?", (target_id,)
-        ).fetchone()
-    finally:
-        conn.close()
+        conn = get_connection()
+        try:
+            user_lama = conn.execute(
+                "SELECT * FROM users WHERE user_id = ?", (target_id,)
+            ).fetchone()
+        except sqlite3.Error as e:
+            print(f"\nGagal mengambil data user: {e}")
+            input("\nTekan Enter untuk kembali ke menu...")
+            return
+        finally:
+            conn.close()
 
-    if not user_lama:
-        clear()
-        print(f"\nUser dengan ID {target_id} tidak ditemukan!")
-        input("\nTekan Enter untuk kembali ke menu...")
-        return
+        if not user_lama:
+            pesan_error = f"User dengan ID {target_id} tidak ditemukan!"
+            continue
+
+        break
 
     # Simpan data sementara agar bisa di edit berkali kali sebelum di commit
     nama_baru = user_lama["nama"]
@@ -522,22 +526,27 @@ def delete_user(current_user_id=None):
                 )
                 input("\nTekan Enter untuk kembali ke menu...")
                 return
-            break
         except ValueError:
             pesan_error = "user_id harus berupa angka!"
+            continue
 
-    conn = get_connection()
-    try:
-        user_target = conn.execute(
-            "SELECT username, role FROM users WHERE user_id = ?", (target_id,)
-        ).fetchone()
-    finally:
-        conn.close()
+        conn = get_connection()
+        try:
+            user_target = conn.execute(
+                "SELECT username, role FROM users WHERE user_id = ?", (target_id,)
+            ).fetchone()
+        except sqlite3.Error as e:
+            print(f"\nGagal memeriksa data user: {e}")
+            input("\nTekan Enter untuk kembali ke menu...")
+            return
+        finally:
+            conn.close()
 
-    if not user_target:
-        print(f"\nUser dengan ID {target_id} tidak ditemukan!")
-        input("\nTekan Enter untuk kembali ke menu...")
-        return
+        if not user_target:
+            pesan_error = f"User dengan ID {target_id} tidak ditemukan!"
+            continue
+
+        break
 
     # Cegah penghapusan jika user tersebut adalah satu-satunya admin
     if user_target["role"] == "admin":

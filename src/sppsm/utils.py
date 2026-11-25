@@ -5,7 +5,7 @@ import sys
 
 
 def enter():
-    print("\nTekan Enter untuk melanjutkan", end="", flush=True)
+    print("\nTekan Enter untuk melanjutkan", flush=True)
 
     if os.name == "nt":
         import msvcrt

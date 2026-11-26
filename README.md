@@ -1,27 +1,131 @@
 # SPPSM (Sistem Pengelolaan & Penjemputan Sampah Mandiri)
 
-Proyek Akhir untuk tugas kampus.
-Wajarnya ini pakai uv [uv](https://docs.astral.sh/uv/) tapi bisa juga pakai pip (nanti aku urus)
+Aplikasi *Command Line Interface* (CLI) untuk manajemen penjemputan dan pengelolaan sampah mandiri warga, menghubungkan Warga, Petugas kebersihan, dan Administrator dalam satu sistem terpadu.
+
+Proyek Akhir untuk mata kuliah **Algoritma dan Pemrograman Dasar (APD)**.
 
 ---
 
-# Cara install uv
+## Fitur Utama Berdasarkan Role
 
-```bash
-pip install uv
+Sistem ini menerapkan *Role-Based Access Control* (RBAC) dengan 3 peran pengguna:
+
+### 1. Warga
+- **Registrasi & Login Mandiri**: Pendaftaran akun warga dengan validasi input yang ketat dan enkripsi password.
+- **Pengajuan Penjemputan**: Mengajukan permintaan jemput sampah baru dengan opsi fleksibel: alamat default profil atau alamat penjemputan khusus, beserta catatan deskripsi sampah.
+- **Riwayat Penjemputan Real-time**: Memantau perkembangan status penjemputan (`menunggu`, `selesai`, `ditolak`), termasuk informasi tanggal jemput, berat timbangan, dan catatan petugas.
+
+### 2. Petugas Kebersihan
+- **Antrean Request**: Melihat daftar seluruh permintaan sampah warga yang siap dijemput (berstatus `menunggu`).
+- **Konfirmasi Penjemputan**: Menimbang dan memasukkan berat sampah (kg) serta catatan hasil penjemputan, yang otomatis memperbarui status menjadi `selesai`.
+- **Penolakan Request**: Menolak permintaan jika sampah tidak layak/tidak memenuhi ketentuan dengan mencantumkan alasan penolakan yang jelas.
+
+### 3. Administrator
+- **Manajemen User (CRUD Penuh)**: Menambahkan akun baru (Warga, Petugas, Admin), melihat data user, memperbarui informasi profil/password, dan menghapus akun.
+- **Manajemen Request (CRUD Penuh)**: Memantau seluruh transaksi penjemputan, memperbarui data request (berat, alamat, status, catatan), atau menghapus data request.
+
+---
+
+## Tech Stack & Arsitektur Keamanan
+
+- **Bahasa**: Python 3.13+
+- **Database**: SQLite3 (Relasional dengan integritas *Foreign Key* dan `ON DELETE CASCADE`)
+- **Keamanan Password**:
+  - Hashing menggunakan standar industri **PBKDF2 HMAC SHA-256** dengan *Salt* acak 16-byte (`hashlib` + `secrets`). Password tidak disimpan dalam bentuk *plain text*.
+  - Masking input password saat pengetikan menggunakan library `pwinput`.
+- **Antarmuka CLI**:
+  - `inquirer`: Menu navigasi interaktif berbasis panah keyboard.
+  - `prettytable`: Penyajian data tabel yang terstruktur dan rapi.
+- **Standar & Kualitas Kode**:
+  - Validasi ketat terhadap input teks bebas (mencegah input simbol murni/kosong seperti `!!!!` pada username, nama, alamat, dan catatan).
+  - Standarisasi format kode dan linting menggunakan `ruff` (standar PEP 8).
+
+---
+
+## Struktur Direktori Proyek
+
+```text
+src/sppsm/
+├── main.py        # Entry point utama aplikasi & manajemen sesi login
+├── auth.py        # Logika autentikasi (login, register, session)
+├── warga.py       # Alur antarmuka dan menu role Warga
+├── petugas.py     # Alur antarmuka dan pemrosesan request oleh Petugas
+├── admin.py       # Alur antarmuka dashboard Administrator
+├── requests.py    # Logika bisnis dan query CRUD data request penjemputan
+├── users.py       # Logika bisnis dan query CRUD data user
+├── database.py    # Skema SQLite, inisialisasi tabel, dan seeding data awal
+└── utils.py       # Helper functions (hashing PBKDF2, verify, clear, enter)
 ```
 
-### 1. Clone repository & install dependencies:
-```bash
-git clone https://github.com/Lynx-thelearner/sppsm.git
-cd sppsm
-uv sync
-```
+---
 
-### 2. Jalankan aplikasi:
-```bash
-uv run sppsm
-```
+## Cara Menjalankan Aplikasi
+
+Kamu dapat menjalankan aplikasi ini menggunakan **`uv`** (sangat direkomendasikan) atau menggunakan **`pip` standar bawaan Python**.
+
+### Opsi A: Menggunakan `uv` (Direkomendasikan)
+
+1. **Install uv** (jika belum terpasang):
+   ```bash
+   pip install uv
+   ```
+
+2. **Clone repository & install dependencies:**
+   ```bash
+   git clone https://github.com/Lynx-thelearner/sppsm.git
+   cd sppsm
+   uv sync
+   ```
+
+3. **Jalankan aplikasi:**
+   ```bash
+   uv run sppsm
+   ```
+
+---
+
+### Opsi B: Menggunakan Python & `pip` Standar
+
+Jika di komputer penguji tidak terpasang `uv`, kamu tetap bisa menjalankannya menggunakan virtual environment standar:
+
+1. **Clone repository:**
+   ```bash
+   git clone https://github.com/Lynx-thelearner/sppsm.git
+   cd sppsm
+   ```
+
+2. **Buat & aktifkan virtual environment:**
+   - **Linux / macOS:**
+     ```bash
+     python3 -m venv .venv
+     source .venv/bin/activate
+     ```
+   - **Windows:**
+     ```bash
+     python -m venv .venv
+     .venv\Scripts\activate
+     ```
+
+3. **Install dependensi & jalankan:**
+   ```bash
+   pip install .
+   sppsm
+   ```
+   *(Atau alternatif langsung tanpa install package: `pip install inquirer prettytable pwinput` lalu `python -m src.sppsm.main`)*
+
+---
+
+## Akun Demo / Dummy untuk Pengujian
+
+Gunakan akun bawaan database berikut untuk mencoba berbagai hak akses (*role*):
+
+| Role | Username | Password | Nama | Keterangan / Hak Akses |
+| :--- | :--- | :--- | :--- | :--- |
+| **Admin** | `Fysortheguy` | `hafizh123` | Hafizh | Mengelola seluruh data User & Request (CRUD penuh) |
+| **Petugas** | `Tomgun` | `tom123` | Tommy | Memproses request jemput (timbang berat/tolak request) |
+| **Warga** | `BennyAdventureTeam` | `ben123` | Bennet | Membuat request penjemputan & melihat riwayat |
+| **Warga** | `lynxstilllearning` | `lynxlynxy` | Lynx | Akun warga alternatif |
+| **Warga** | `kikirakira` | `kiki123` | Kiki | Akun warga alternatif |
 
 ---
 

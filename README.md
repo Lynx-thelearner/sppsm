@@ -115,12 +115,12 @@ Jika di komputer penguji tidak terpasang `uv`, kamu tetap bisa menjalankannya me
 
 3. **Install dependensi & jalankan:**
    ```bash
+   # Install dependensi yang dibutuhkan:
    pip install -r requirements.txt
-   pip install .
-   sppsm
-   ```
-   *(Alternatif jika tidak ingin build package: cukup `pip install -r requirements.txt` lalu jalankan `python -m sppsm.main`)*
 
+   # Jalankan aplikasi langsung:
+   python -m src.sppsm.main
+   ```
 ---
 
 ## Akun Demo / Dummy untuk Pengujian

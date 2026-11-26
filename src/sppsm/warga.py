@@ -1,3 +1,4 @@
+import math
 import sqlite3
 from contextlib import closing
 from datetime import datetime
@@ -117,6 +118,34 @@ def buat_request():
             print("\nPilihan hanya 'y' dan 'n'.")
             enter()
 
+    berat_sampah = None
+    while True:
+        berat_input = (
+            input(
+                "Perkiraan berat sampah dalam kg (Opsional, >0-250 kg, Enter jika kosong): "
+            )
+            .strip()
+            .replace(",", ".")
+        )
+        if not berat_input:
+            berat_sampah = None
+            break
+        try:
+            nilai_berat = float(berat_input)
+            if not math.isfinite(nilai_berat) or nilai_berat <= 0:
+                print("Berat sampah harus lebih dari 0 kg dan berupa angka valid.")
+                enter()
+                continue
+            if nilai_berat > 250:
+                print("Berat sampah maksimal 250 kg (rentang >0-250 kg).")
+                enter()
+                continue
+            berat_sampah = round(nilai_berat, 2)
+            break
+        except ValueError:
+            print("Berat sampah harus berupa angka (>0-250 kg, contoh: 2.5).")
+            enter()
+
     catatan = None
     while True:
         catatan_input = input(
@@ -135,10 +164,10 @@ def buat_request():
         try:
             conn.execute(
                 """
-                INSERT INTO requests (user_id, tanggal_pengajuan, alamat, status, catatan)
-                VALUES (?, ?, ?, 'menunggu', ?)
+                INSERT INTO requests (user_id, tanggal_pengajuan, berat_sampah, alamat, status, catatan)
+                VALUES (?, ?, ?, ?, 'menunggu', ?)
                 """,
-                (session["user_id"], tanggal_sekarang, alamat, catatan),
+                (session["user_id"], tanggal_sekarang, berat_sampah, alamat, catatan),
             )
             conn.commit()
             print("\n[Sukses] Pengajuan penjemputan berhasil dibuat!")

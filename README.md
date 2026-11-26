@@ -100,18 +100,26 @@ Jika di komputer penguji tidak terpasang `uv`, kamu tetap bisa menjalankannya me
      python3 -m venv .venv
      source .venv/bin/activate
      ```
-   - **Windows:**
-     ```bash
+   - **Windows (PowerShell):**
+     ```powershell
      python -m venv .venv
      .venv\Scripts\activate
      ```
+     > **Catatan Keamanan (Jika muncul error `running scripts is disabled`):**  
+     > Ini adalah proteksi keamanan bawaan PowerShell. Kamu dapat mengizinkan script lokal berjalan secara aman menggunakan standar resmi Microsoft (cukup jalankan sekali):
+     > ```powershell
+     > Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+     > ```
+     > *(Aman karena `-Scope CurrentUser` hanya berlaku untuk akunmu sendiri, dan `RemoteSigned` hanya membolehkan script yang dibuat di komputer lokal sementara script unduhan asing dari internet tetap diblokir).*  
+     > **Atau tanpa ubah izin:** Buka terminal **Command Prompt (CMD)** dan jalankan `.venv\Scripts\activate.bat`.
 
 3. **Install dependensi & jalankan:**
    ```bash
+   pip install -r requirements.txt
    pip install .
    sppsm
    ```
-   *(Atau alternatif langsung tanpa install package: `pip install inquirer prettytable pwinput` lalu `python -m src.sppsm.main`)*
+   *(Alternatif jika tidak ingin build package: cukup `pip install -r requirements.txt` lalu jalankan `python -m sppsm.main`)*
 
 ---
 

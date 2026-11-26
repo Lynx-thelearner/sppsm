@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="app.diagrams.net" pages="27">
   <diagram name="menu akun" id="jcLYK0AP-REwXMbDT1nb">
-    <mxGraphModel dx="1299" dy="792" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -503,9 +503,6 @@
         </mxCell>
         <mxCell id="t_u4BKfr4LnzQST3mbWT-1" parent="1" style="shape=offPageConnector;whiteSpace=wrap;html=1;" value="create user" vertex="1">
           <mxGeometry height="60" width="64" x="268" y="40" as="geometry" />
-        </mxCell>
-        <mxCell id="-YCpP0edkz53X-Lgd2gG-1" parent="1" style="shape=offPageConnector;whiteSpace=wrap;html=1;" value="ulang user" vertex="1">
-          <mxGeometry height="50" width="50" x="255" y="1327" as="geometry" />
         </mxCell>
         <mxCell id="Ew-rnC_PECQwRRA58DYN-1" edge="1" parent="1" source="JQpxSv7omc1SnE0BbhgD-18" style="endArrow=classic;html=1;rounded=0;defaultLabelBackgroundColor=page;labelPadding=0 4;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="Ew-rnC_PECQwRRA58DYN-2" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
@@ -2812,7 +2809,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="7sKTfnnDw7Sqq-FBLENI" name="batalkan request warga">
-    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1393" dy="849" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />

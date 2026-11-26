@@ -241,6 +241,6 @@ git push -u origin feat/nama-fitur-kamu
 
 ### Kalau kamu baca ampe akhir
 
-Pada akhirnya yang bener bener penting cuma peraturan nomor 1, 3, 5, 6, 7, yang lainnya opsional, tapi ya bagus kalau semuanya diikutin
+Pada akhirnya yang bener bener penting cuma peraturan nomor 1, 3, 5, 6, 7, yang lainnya opsional, tapi ya bagus kalau semuanya diikutin.
 
 ---
